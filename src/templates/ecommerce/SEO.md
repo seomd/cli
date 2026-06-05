@@ -322,7 +322,7 @@ aeo:
       - perplexity
       - claude
       - gemini
-      - copilot
+      - grok
     last_analyzed: null
     next_analysis: null
 
