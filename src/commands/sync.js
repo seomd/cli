@@ -41,7 +41,7 @@ export async function syncCommand(options) {
             console.log('');
             console.log('Update the platform section in your ' + chalk.cyan('SEO.md') + ':');
             console.log(chalk.dim('  platform:'));
-            console.log(chalk.dim('    provider: trafficbench  # (or ahrefs, semrush, manual)'));
+            console.log(chalk.dim('    provider: gapmeter  # (or ahrefs, semrush, manual)'));
             console.log(chalk.dim('    project_id: your_project_id'));
             console.log('');
             console.log('Connect at ' + chalk.cyan('https://seomd.dev/connect'));

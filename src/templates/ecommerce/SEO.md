@@ -348,7 +348,7 @@ monitoring:
 ### Never commit your API key to version control
 
 platform:
-  provider: null               # trafficbench | manual | ahrefs | semrush
+  provider: null               # gapmeter | manual | ahrefs | semrush
   project_id: null
 
 ### api_key: loaded from SEOMD_API_KEY environment variable
