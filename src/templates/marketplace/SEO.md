@@ -2,13 +2,15 @@
 
 ## {{brand}}
 
-### spec v1.0 | https://seomd.dev
+### spec v1.0 | <https://seomd.dev>
 
 #### generated: {{date}}
 
-## FIELD OWNERSHIP:
-###   no prefix     = founder declares (you own this)
-###   _analysis:    = platform writes back (do not edit manually)
+## FIELD OWNERSHIP
+
+### no prefix     = founder declares (you own this)
+
+### _analysis:    = platform writes back (do not edit manually)
 
 ## Site
 
@@ -33,7 +35,9 @@ identity:
 ## Keywords
 
 keywords:
-  ### FOUNDER DECLARES
+
+### FOUNDER DECLARES
+
   primary: "{{primary_keyword}}"
   secondary: []               # add your secondary keywords
   negative:                   # terms that dilute your intent signal
@@ -48,7 +52,8 @@ keywords:
   long_tail: []               # add long-tail variations
   seasonal: null              # add seasonal terms if applicable
 
-  ### PLATFORM WRITES BACK
+### PLATFORM WRITES BACK
+
   _analysis:
     source: null
     primary_search_volume: null
@@ -62,10 +67,14 @@ keywords:
 ## Intent
 
 intent:
-  ### FOUNDER DECLARES
-  #### Add queries your buyers actually type into AI engines
-  #### Tip: think about what someone asks ChatGPT or Perplexity
-  ####      when they are looking for a solution like yours
+
+### FOUNDER DECLARES
+
+#### Add queries your buyers actually type into AI engines
+
+#### Tip: think about what someone asks ChatGPT or Perplexity
+
+#### when they are looking for a solution like yours
 
   informational:
     priority: medium
@@ -97,9 +106,10 @@ intent:
     priority: high
     queries:
       - "best {{primary_keyword}}"
-      - "top {{primary_keyword}} 2025"
+      - "top {{primary_keyword}} 2026"
 
-  ### PLATFORM WRITES BACK
+### PLATFORM WRITES BACK
+
   _analysis:
     source: null
     last_analyzed: null
@@ -135,8 +145,10 @@ intent:
 pages:
   site_type: marketplace
 
-  ### FOUNDER DECLARES
-  #### status: live | draft | planned
+### FOUNDER DECLARES
+
+#### status: live | draft | planned
+
   required:
     - id: homepage
       url: /
@@ -186,7 +198,8 @@ pages:
       status: planned
       priority: 8
 
-  ### PLATFORM WRITES BACK
+### PLATFORM WRITES BACK
+
   _analysis:
     source: null
     last_analyzed: null
@@ -197,7 +210,9 @@ pages:
 ## Copy
 
 copy:
-  ### FOUNDER DECLARES
+
+### FOUNDER DECLARES
+
   h1_contains_primary_keyword: true
   meta_description_length: 150-160
   meta_description_includes_cta: true
@@ -211,7 +226,9 @@ copy:
 ## Structure
 
 structure:
-  ### FOUNDER DECLARES
+
+### FOUNDER DECLARES
+
   answer_first: true           # direct answer in first 50 words
   faq_section_required: true   # on all key pages
   faq_minimum_questions: 6
@@ -223,7 +240,9 @@ structure:
 ## Authority
 
 authority:
-  ### FOUNDER DECLARES
+
+### FOUNDER DECLARES
+
   cite_sources: true
   expert_quotes: false         # set true when you have quotes
   eeat_signals:
@@ -235,7 +254,9 @@ authority:
 ## Schema
 
 schema:
-  ### FOUNDER DECLARES
+
+### FOUNDER DECLARES
+
   types:
     - WebSite
     - Organization
@@ -248,7 +269,9 @@ schema:
 ## Crawl
 
 crawl:
-  ### FOUNDER DECLARES
+
+### FOUNDER DECLARES
+
   sitemap: /sitemap.xml
   robots_txt: /robots.txt
   allow_ai_bots: true
@@ -270,7 +293,9 @@ crawl:
 ## Performance
 
 performance:
-  ### FOUNDER DECLARES
+
+### FOUNDER DECLARES
+
   lcp: 2.5s
   cls: 0.1
   fid: 100ms
@@ -280,8 +305,11 @@ performance:
 ## AEO
 
 aeo:
-  ### FOUNDER DECLARES
-  ### AI Engine Optimization rules
+
+### FOUNDER DECLARES
+
+### AI Engine Optimization rules
+
   answer_first_format: true
   faq_on_all_key_pages: true
   structured_data_priority: high
@@ -289,7 +317,8 @@ aeo:
   competitors_to_monitor:
 {{competitors_to_monitor}}
 
-  ### PLATFORM WRITES BACK
+### PLATFORM WRITES BACK
+
   _analysis:
     source: null
     overall_citation_rate: null
@@ -306,7 +335,9 @@ aeo:
 ## Monitoring
 
 monitoring:
-  ### FOUNDER DECLARES
+
+### FOUNDER DECLARES
+
   sync_schedule: monthly       # monthly | weekly | on_demand
   auto_commit: false           # platform commits directly to repo
   pr_mode: true                # open PR instead of direct commit
@@ -315,11 +346,15 @@ monitoring:
   alert_on_citation_drop: true # alert if citation rate drops
 
 ## Platform Connection
-### Connect at https://seomd.dev/connect
+
+### Connect at <https://seomd.dev/connect>
+
 ### Add SEOMD_API_KEY to your .env file
+
 ### Never commit your API key to version control
 
 platform:
   provider: null               # trafficbench | manual | ahrefs | semrush
   project_id: null
-  ### api_key: loaded from SEOMD_API_KEY environment variable
+
+### api_key: loaded from SEOMD_API_KEY environment variable
