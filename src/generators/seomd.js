@@ -4,6 +4,12 @@ import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
+function getBrandName(domain) {
+    return domain
+        .replace(/^(https?:\/\/)?(www\.)?/, '')
+        .replace(/\.[a-z]{2,6}(\.[a-z]{2,6})?$/i, '');
+}
+
 /**
  * Generates the content of the seo.md file by reading the corresponding site type template
  * and substituting placeholders.
@@ -29,8 +35,8 @@ export function generateSeoMd(answers) {
     const brandSnake = brandLower.replace(/\s+/g, '_');
 
     // Formatting YAML blocks for competitors
-    const competitorTerms = competitorList.map(c => `    - "${c.replace('.com', '')} alternative"`).join('\n') || '    []';
-    const comparisonQueries = competitorList.map(c => `      - "${c.replace('.com', '')} vs ${brandLower}"`).join('\n') || `      - "${brandLower} vs [competitor]"`;
+    const competitorTerms = competitorList.map(c => `    - "${getBrandName(c)} alternative"`).join('\n') || '    []';
+    const comparisonQueries = competitorList.map(c => `      - "${getBrandName(c)} vs ${brandLower}"`).join('\n') || `      - "${brandLower} vs [competitor]"`;
     const toMonitor = competitorList.map(c => `    - ${c}`).join('\n') || '    []';
 
     // Perform simple string replacements
