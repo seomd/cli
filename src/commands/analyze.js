@@ -66,18 +66,23 @@ export async function analyzeCommand(options) {
         }
     }
 
+    // Filter by options.page if specified
+    if (options.page) {
+        pagesList = pagesList.filter(p => p.url === options.page);
+    }
+
     // Default to homepage if no pages defined
     if (pagesList.length === 0) {
         pagesList.push({
             id: 'homepage',
-            url: '/',
+            url: options.page || '/',
             primary_keyword: `best ${niche}`,
             status: 'planned'
         });
     }
 
     // Extract engines
-    const engines = data.aeo?._analysis?.engines_tracked || ['Claude', 'ChatGPT'];
+    const engines = data.aeo?._analysis?.engines_tracked || ['ChatGPT'];
 
     console.log(chalk.bold.cyan(`\n📊 foxcite: Running AI Search Audit for ${chalk.white(domain)}`));
     console.log(chalk.dim(`Engines: ${engines.join(', ')}`));
