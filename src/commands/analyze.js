@@ -84,7 +84,7 @@ export async function analyzeCommand(options) {
     // Extract engines
     const engines = data.aeo?._analysis?.engines_tracked || ['ChatGPT'];
 
-    console.log(chalk.bold.cyan(`\n📊 foxcite: Running AI Search Audit for ${chalk.white(domain)}`));
+    console.log(chalk.bold.cyan(`\n📊 Foxcite: Running AI Search Audit for ${chalk.white(domain)}`));
     console.log(chalk.dim(`Engines: ${engines.join(', ')}`));
     console.log(chalk.dim(`Pages to scan: ${pagesList.length}`));
     console.log('');
@@ -100,7 +100,7 @@ export async function analyzeCommand(options) {
             pages: pagesList.map(p => ({
                 id: p.id,
                 url: p.url,
-                primary_keyword: p.primary_keyword,
+                primary_keyword: p.primary_keyword || data.keywords?.primary || `best ${niche}`,
                 status: p.status
             }))
         };
