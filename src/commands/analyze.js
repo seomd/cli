@@ -82,7 +82,10 @@ export async function analyzeCommand(options) {
     }
 
     // Extract engines
-    const engines = data.aeo?._analysis?.engines_tracked || ['ChatGPT'];
+    let engines = data.aeo?._analysis?.engines_tracked || ['ChatGPT'];
+    if (options.engines) {
+        engines = options.engines.split(',').map(e => e.trim());
+    }
 
     console.log(chalk.bold.cyan(`\n📊 Foxcite: Running AI Search Audit for ${chalk.white(domain)}`));
     console.log(chalk.dim(`Engines: ${engines.join(', ')}`));
@@ -116,7 +119,8 @@ export async function analyzeCommand(options) {
         await writeAnalysisToSeoMd(doc, results, cwd);
 
         // Writeback to SEO.REVERSE.md
-        await writeReverseMd(cwd, results);
+        const brandName = data.identity?.brand || 'My Brand';
+        await writeReverseMd(cwd, results, domain, brandName);
 
         // Writeback to .seomd/pages/*.md
         await writePageAnalysis(cwd, results);

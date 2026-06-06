@@ -67,7 +67,7 @@ export async function writeAnalysisToSeoMd(doc, response, cwd) {
  * @param {string} cwd - Current working directory
  * @param {any} response - The API response from analyze/sync
  */
-export async function writeReverseMd(cwd, response) {
+export async function writeReverseMd(cwd, response, defaultDomain = 'example.com', defaultBrand = 'My Brand') {
     const reversePath = path.join(cwd, 'SEO.REVERSE.md');
 
     const reversePages = response.page_analysis.map(p => ({
@@ -88,8 +88,8 @@ export async function writeReverseMd(cwd, response) {
     const primaryCompetitor = response.intent_analysis?.comparison?.top_cited_competitor || 'None';
 
     const reverseDoc = {
-        domain: response.domain || 'example.com',
-        brand: response.brand_name || 'My Brand',
+        domain: response.domain || defaultDomain,
+        brand: response.brand_name || defaultBrand,
         primary_competitor: primaryCompetitor,
         last_analyzed: response.aeo_analysis.last_analyzed,
         next_analysis: response.aeo_analysis.next_analysis,

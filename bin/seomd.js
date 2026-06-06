@@ -32,6 +32,7 @@ program
     .description('Run citation analysis and write back _analysis blocks')
     .option('--page <url>', 'analyze a specific page only')
     .option('--intent <category>', 'analyze a specific intent category only')
+    .option('--engines <list>', 'comma-separated list of engines to scan (e.g. chatgpt,claude)')
     .action(analyzeCommand);
 
 program

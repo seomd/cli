@@ -88,7 +88,8 @@ export async function syncCommand(options) {
         await writeAnalysisToSeoMd(doc, results, cwd);
 
         // Writeback to SEO.REVERSE.md
-        await writeReverseMd(cwd, results);
+        const brandName = data.identity?.brand || 'My Brand';
+        await writeReverseMd(cwd, results, domain, brandName);
 
         // Writeback to .seomd/pages/*.md
         await writePageAnalysis(cwd, results);
