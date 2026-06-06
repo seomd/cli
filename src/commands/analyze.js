@@ -9,6 +9,23 @@ import { writeAnalysisToSeoMd, writeReverseMd, writePageAnalysis } from '../util
 
 dotenv.config();
 
+function matchRoute(pattern, url) {
+    const cleanPattern = pattern.replace(/\/$/, '');
+    const cleanUrl = url.replace(/\/$/, '');
+    
+    if (cleanPattern.toLowerCase() === cleanUrl.toLowerCase()) {
+        return true;
+    }
+    
+    // Replace "/[param]" with optional group "(?:/([^/]+))?"
+    const regexPattern = cleanPattern
+        .replace(/\/\[[^\]]+\]/g, '(?:\\/([^/]+))?')
+        .replace(/\//g, '\\/');
+        
+    const regex = new RegExp('^' + regexPattern + '\\/?$', 'i');
+    return regex.test(url);
+}
+
 export async function analyzeCommand(options) {
     const apiKey = process.env.SEOMD_API_KEY;
     const paymentToken = process.env.SEOMD_PAYMENT_TOKEN;
@@ -68,15 +85,22 @@ export async function analyzeCommand(options) {
 
     // Filter by options.page if specified
     if (options.page) {
-        pagesList = pagesList.filter(p => p.url === options.page);
+        pagesList = pagesList.filter(p => matchRoute(p.url, options.page));
     }
 
-    // Default to homepage if no pages defined
+    // Default fallback if no page matches or list is empty
     if (pagesList.length === 0) {
+        let fallbackId = 'homepage';
+        if (options.page && options.page !== '/') {
+            fallbackId = options.page
+                .replace(/^\//, '')
+                .replace(/\/$/, '')
+                .replace(/[^a-zA-Z0-9-]/g, '-');
+        }
         pagesList.push({
-            id: 'homepage',
+            id: fallbackId,
             url: options.page || '/',
-            primary_keyword: `best ${niche}`,
+            primary_keyword: data.keywords?.primary || `best ${niche}`,
             status: 'planned'
         });
     }
@@ -95,14 +119,16 @@ export async function analyzeCommand(options) {
     const spinner = ora('Initializing scan sessions...').start();
 
     try {
+        const brand = data.identity?.brand || 'My Brand';
         const payload = {
             domain,
             niche,
+            brand,
             queries,
             engines,
             pages: pagesList.map(p => ({
                 id: p.id,
-                url: p.url,
+                url: options.page || p.url, // Use the specific page requested if provided
                 primary_keyword: p.primary_keyword || data.keywords?.primary || `best ${niche}`,
                 status: p.status
             }))
