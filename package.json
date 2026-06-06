@@ -1,11 +1,11 @@
 {
     "name": "seomd",
-    "version": "0.1.0",
+    "version": "1.0.2",
     "description": "The official CLI for the SEO.md open standard — AEO infrastructure for technical founders",
     "homepage": "https://seomd.dev",
     "repository": {
         "type": "git",
-        "url": "https://github.com/seomd/seomd-cli"
+        "url": "https://github.com/seomd/cli"
     },
     "license": "MIT",
     "type": "module",
