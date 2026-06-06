@@ -27,7 +27,7 @@ export async function syncCommand(options) {
 
     const cwd = process.cwd();
     let doc, data;
-    
+
     try {
         const parsed = await parseSeoMd(cwd);
         doc = parsed.doc;
@@ -54,7 +54,7 @@ export async function syncCommand(options) {
         }
     }
 
-    console.log(chalk.bold.cyan(`\n🔄 GapMeter: Syncing AI Search Audit for ${chalk.white(domain)}`));
+    console.log(chalk.bold.cyan(`\n🔄 foxcite: Syncing AI Search Audit for ${chalk.white(domain)}`));
     const spinner = ora('Fetching cached analysis from platform...').start();
 
     try {
@@ -101,7 +101,7 @@ export async function syncCommand(options) {
         console.log(chalk.bold('--- Sync Results Summary ---'));
         console.log(`Overall Citation Rate : ${chalk.bold.green((aeo.overall_citation_rate * 100).toFixed(0) + '%')}`);
         console.log(`Overall Gap Score     : ${chalk.bold.red(aeo.overall_gap_score)}`);
-        
+
         if (results.credits_remaining !== null) {
             console.log(`Credits Remaining     : ${chalk.cyan(results.credits_remaining)}`);
         }

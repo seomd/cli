@@ -27,7 +27,7 @@ export async function analyzeCommand(options) {
 
     const cwd = process.cwd();
     let doc, data;
-    
+
     try {
         const parsed = await parseSeoMd(cwd);
         doc = parsed.doc;
@@ -44,7 +44,7 @@ export async function analyzeCommand(options) {
     }
 
     const niche = data.site?.type || 'saas';
-    
+
     // Extract intent queries
     const queries = {};
     if (data.intent) {
@@ -79,7 +79,7 @@ export async function analyzeCommand(options) {
     // Extract engines
     const engines = data.aeo?._analysis?.engines_tracked || ['Claude', 'ChatGPT'];
 
-    console.log(chalk.bold.cyan(`\n📊 GapMeter: Running AI Search Audit for ${chalk.white(domain)}`));
+    console.log(chalk.bold.cyan(`\n📊 foxcite: Running AI Search Audit for ${chalk.white(domain)}`));
     console.log(chalk.dim(`Engines: ${engines.join(', ')}`));
     console.log(chalk.dim(`Pages to scan: ${pagesList.length}`));
     console.log('');
@@ -101,7 +101,7 @@ export async function analyzeCommand(options) {
         };
 
         spinner.text = 'Scanning AI search engines and compiling citations (this may take up to a minute)...';
-        
+
         const response = await client.post('/cli/analyze', payload);
         const results = response.data;
 
@@ -124,7 +124,7 @@ export async function analyzeCommand(options) {
         console.log(chalk.bold('--- Results Summary ---'));
         console.log(`Overall Citation Rate : ${chalk.bold.green((aeo.overall_citation_rate * 100).toFixed(0) + '%')}`);
         console.log(`Overall Gap Score     : ${chalk.bold.red(aeo.overall_gap_score)}`);
-        
+
         if (results.credits_remaining !== null) {
             console.log(`Credits Remaining     : ${chalk.cyan(results.credits_remaining)}`);
         }

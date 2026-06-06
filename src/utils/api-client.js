@@ -4,7 +4,7 @@ import dotenv from 'dotenv';
 // Load .env configuration
 dotenv.config();
 
-const API_URL = process.env.SEOMD_API_URL || 'https://api.gapmeter.com';
+const API_URL = process.env.SEOMD_API_URL || 'https://api.foxcite.com';
 const API_KEY = process.env.SEOMD_API_KEY;
 const PAYMENT_TOKEN = process.env.SEOMD_PAYMENT_TOKEN;
 const SEOMD_DOMAIN = process.env.SEOMD_DOMAIN;
@@ -27,7 +27,7 @@ client.interceptors.response.use(
         if (error.response) {
             const status = error.response.status;
             const detail = error.response.data?.detail || error.response.data?.message || error.message;
-            
+
             if (status === 401) {
                 return Promise.reject(new Error('Authentication failed: Invalid or missing API key (SEOMD_API_KEY).'));
             }
