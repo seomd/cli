@@ -47,6 +47,9 @@ seomd status
 ### `seomd init`
 Scaffolds a new `SEO.md` file in the current working directory.
 
+### `seomd migrate`
+Migrates an existing `.seomd/` directory to the latest structure (creates missing files and moves legacy `.seomd/pages/*.md` into `.seomd/pages/md/*.md`).
+
 ### `seomd validate`
 Validates the structural integrity and required fields of your `SEO.md` file.
 
@@ -58,6 +61,42 @@ Analyzes your local specification and requests search visibility summaries from 
 
 ### `seomd sync`
 Synchronizes live engine analysis blocks, keyword gap scores, and cited sources from your connected writeback platform.
+
+---
+
+## Local Development
+
+When testing changes to the CLI from this repository, prefer running the local entrypoint to avoid accidentally using an older globally installed version.
+
+```bash
+node ./bin/seomd.js --help
+node ./bin/seomd.js init
+node ./bin/seomd.js migrate
+```
+
+---
+
+## Release Notes (Contributor Tagging)
+
+To generate a contributor section for a release (commit-based attribution), maintain mappings in `.github/contributors.yml` and generate markdown from a tag range:
+
+```bash
+npm run release:contributors -- --from v1.0.2 --to v1.0.3
+```
+
+To write output to a file:
+
+```bash
+npm run release:contributors -- --from v1.0.2 --to v1.0.3 --out notes/v1.0.3-contributors.md
+```
+
+To generate a full release note (changes + contributors) for a tag:
+
+```bash
+npm run release:notes -- --tag v1.0.3
+```
+
+Automation: the repository includes a GitHub Actions workflow that runs on tag push (`v*`) and creates/updates the GitHub Release using `scripts/release-notes.js`.
 
 ---
 
