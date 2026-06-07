@@ -13,7 +13,8 @@ export async function validateCommand() {
         if (errors.length === 0 && warnings.length === 0) {
             console.log(chalk.green('  ✓ ') + chalk.bold('SEO.md is fully compliant with spec v1.0!'));
             console.log('');
-            process.exit(0);
+            process.exitCode = 0;
+            return;
         }
 
         // Print errors
@@ -41,18 +42,21 @@ export async function validateCommand() {
             console.log(chalk.red.bold(`✗ Validation failed: ${errors.length} error(s) and ${warnings.length} warning(s) found.`));
             console.log(chalk.dim('Please fix the errors to make your SEO.md valid.'));
             console.log('');
-            process.exit(1);
+            process.exitCode = 1;
+            return;
         } else {
             console.log(chalk.yellow.bold(`✓ Validation passed with ${warnings.length} warning(s).`));
             console.log(chalk.dim('Warnings are optional recommendations and do not block compliance.'));
             console.log('');
-            process.exit(0);
+            process.exitCode = 0;
+            return;
         }
 
     } catch (err) {
         console.log(chalk.red('✗ ') + chalk.bold('Validation process failed:'));
         console.log(`  ${chalk.dim(err.message)}`);
         console.log('');
-        process.exit(1);
+        process.exitCode = 1;
+        return;
     }
 }

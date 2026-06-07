@@ -28,7 +28,8 @@ export async function statusCommand(options) {
                 console.log(chalk.white('     npx seomd analyze'));
                 console.log('');
             }
-            process.exit(0);
+            process.exitCode = 0;
+            return;
         }
 
         // Format overall metrics
@@ -77,7 +78,8 @@ export async function statusCommand(options) {
             });
 
             console.log(JSON.stringify(output, null, 2));
-            process.exit(0);
+            process.exitCode = 0;
+            return;
         }
 
         // Output beautiful terminal dashboard
@@ -145,7 +147,8 @@ export async function statusCommand(options) {
         console.log(chalk.red('✗ ') + chalk.bold('Failed to display status:'));
         console.log(`  ${chalk.dim(err.message)}`);
         console.log('');
-        process.exit(1);
+        process.exitCode = 1;
+        return;
     }
 }
 

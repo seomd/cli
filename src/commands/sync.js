@@ -79,7 +79,7 @@ export async function syncCommand(options) {
             console.log(`Last Analyzed         : ${chalk.dim(aeo.last_analyzed)}`);
             console.log(chalk.yellow('\n⚠ Dry-run enabled: No files were modified.'));
             console.log('');
-            process.exit(0);
+            return;
         }
 
         spinner.text = 'Updating repository files...';
