@@ -158,7 +158,7 @@ Automation: the repository includes a GitHub Actions workflow that runs on tag p
 
 ## Platform Connections & API Keys
 
-To enable live citation writebacks (using automated platforms like [Foxcite](https://foxcite.com)):
+To enable live intelligence writebacks (using automated platforms like [Foxcite](https://foxcite.com)):
 
 1. Obtain a developer API key from your platform provider.
 2. Export the key as an environment variable:
