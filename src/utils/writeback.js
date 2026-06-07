@@ -117,7 +117,7 @@ export async function writeReverseMd(cwd, response, defaultDomain = 'example.com
  */
 export async function writePageAnalysis(cwd, response) {
     const seomdDir = path.join(cwd, '.seomd');
-    const pagesDir = path.join(seomdDir, 'pages');
+    const pagesDir = path.join(seomdDir, 'pages', 'md');
 
     await fs.ensureDir(pagesDir);
 

@@ -2,3 +2,4 @@ node_modules
 .DS_Store
 .env
 test/
+V2_NOTES.md
