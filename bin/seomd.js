@@ -14,6 +14,7 @@ import { analyzeCommand } from '../src/commands/analyze.js';
 import { syncCommand } from '../src/commands/sync.js';
 import { statusCommand } from '../src/commands/status.js';
 import { validateCommand } from '../src/commands/validate.js';
+import { migrateCommand } from '../src/commands/migrate.js';
 
 program
     .name('seomd')
@@ -51,5 +52,10 @@ program
     .command('validate')
     .description('Validate your SEO.md against the spec')
     .action(validateCommand);
+
+program
+    .command('migrate')
+    .description('Migrate .seomd/ directory to the latest structure')
+    .action(migrateCommand);
 
 program.parse();
