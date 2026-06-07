@@ -1,80 +1,138 @@
-# seomd-cli
+# SEO.md CLI
 
-The official command-line interface for the **SEO.md** open standard — AEO (AI Engine Optimization) infrastructure for technical founders.
+<p align="center">
+  <img alt="SEO.md CLI banner" src="./assets/banner.png" />
+</p>
 
-Use the CLI to scaffold, validate, analyze, and synchronize `SEO.md` configuration files directly from your workspace.
+The official CLI for the [SEO.md](https://seomd.dev) open standard — AEO (AI Engine Optimization) infrastructure for technical founders.
 
----
+Use it to scaffold, validate, analyze, and sync `SEO.md` files directly from your repo.
 
-## Installation
+## Table of Contents
 
-Install the CLI globally using `npm`:
+- [Why SEO.md](#why-seomd)
+- [Install](#install)
+- [Quick Start](#quick-start)
+- [Configuration](#configuration)
+- [Commands](#commands)
+- [Local Development](#local-development)
+- [Testing](#testing)
+- [Release Notes (Contributor Tagging)](#release-notes-contributor-tagging)
+- [Security](#security)
+- [Specification Reference](#specification-reference)
+- [License](#license)
+
+## Why SEO.md
+
+SEO.md is a structured, version-controlled specification for describing your site, intent queries, and pages so AI engines can cite you more often.
+
+- Declare what matters (site, identity, keywords, intent, pages)
+- Run audits via your connected platform
+- Write back `_analysis` blocks and per-page playbooks into your repo
+
+## Install
 
 ```bash
 npm install -g seomd-cli
 ```
 
----
+Verify:
+
+```bash
+seomd --help
+```
 
 ## Quick Start
 
-### 1. Initialize a Specification
-Run the interactive setup in the root of your project to generate a tailored `SEO.md` file:
+### 1) Initialize
+
+Run in the root of your project:
 
 ```bash
 seomd init
 ```
-The CLI will ask you five quick questions (e.g., brand name, domain, site type, primary keyword, and competitors) and scaffold the format matching your site type (SaaS, Blog, eCommerce, Marketplace, or Local).
 
-### 2. Validate the File
-Verify that your local file complies with the official open specification rules:
+### 2) Validate
 
 ```bash
 seomd validate
 ```
 
-### 3. Check Local Status
-Check validation state and connection parameters:
+### 3) Run an Audit (Analyze) and Sync
+
+```bash
+seomd analyze
+seomd sync
+```
+
+### 4) View Status
 
 ```bash
 seomd status
+seomd status --json
 ```
 
----
+## Configuration
 
-## Command Reference
+Copy the example env file:
+
+```bash
+cp .env.example .env
+```
+
+Environment variables:
+
+- `SEOMD_API_URL` (optional) API base URL (defaults to `https://api.foxcite.com`)
+- `SEOMD_API_KEY` (optional) platform API key (human dashboard auth)
+- `SEOMD_PAYMENT_TOKEN` (optional) agent-native payment token (x402 pay-per-scan)
+- `SEOMD_DOMAIN` (optional) override domain header
+
+## Commands
 
 ### `seomd init`
-Scaffolds a new `SEO.md` file in the current working directory.
 
-### `seomd migrate`
-Migrates an existing `.seomd/` directory to the latest structure (creates missing files and moves legacy `.seomd/pages/*.md` into `.seomd/pages/md/*.md`).
+Scaffolds `SEO.md`, `SEO.REVERSE.md`, and the `.seomd/` intelligence directory.
 
 ### `seomd validate`
-Validates the structural integrity and required fields of your `SEO.md` file.
+
+Validates your `SEO.md` against the spec requirements.
 
 ### `seomd status`
-Displays local validation results, connected platforms, and project identification.
+
+Shows current citation rates and gap scores from `_analysis`.
+
+- `--json` outputs machine-readable JSON for scripts/CI
 
 ### `seomd analyze`
-Analyzes your local specification and requests search visibility summaries from your connected platform.
+
+Runs an AI search audit via your connected platform and writes results back into:
+
+- `SEO.md` (`_analysis` blocks)
+- `SEO.REVERSE.md` (generated reverse view)
+- `.seomd/pages/*.md` (per-page playbooks when available)
 
 ### `seomd sync`
-Synchronizes live engine analysis blocks, keyword gap scores, and cited sources from your connected writeback platform.
 
----
+Pulls cached/latest platform intelligence and writes it back to the same files as `analyze`.
+
+- `--dry-run` prints a preview and does not modify files
 
 ## Local Development
 
-When testing changes to the CLI from this repository, prefer running the local entrypoint to avoid accidentally using an older globally installed version.
+Prefer the local entrypoint while developing:
 
 ```bash
 node ./bin/seomd.js --help
 node ./bin/seomd.js init
-node ./bin/seomd.js migrate
+node ./bin/seomd.js validate
+node ./bin/seomd.js status --json
 ```
 
----
+## Testing
+
+```bash
+npm test
+```
 
 ## Release Notes (Contributor Tagging)
 
@@ -98,8 +156,6 @@ npm run release:notes -- --tag v1.0.3
 
 Automation: the repository includes a GitHub Actions workflow that runs on tag push (`v*`) and creates/updates the GitHub Release using `scripts/release-notes.js`.
 
----
-
 ## Platform Connections & API Keys
 
 To enable live citation writebacks (using automated platforms like [Foxcite](https://foxcite.com)):
@@ -111,9 +167,12 @@ To enable live citation writebacks (using automated platforms like [Foxcite](htt
    ```
 3. Run `seomd sync` or `seomd analyze`.
 
-*Note: Never commit your API keys or `.env` files containing keys to version control.*
+_Note: Never commit your API keys or `.env` files containing keys to version control._
 
----
+## Security
+
+- Never commit `.env` files or API keys
+- Use `.env.example` as the template for required variables
 
 ## Specification Reference
 
