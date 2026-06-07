@@ -19,9 +19,7 @@ jobs:
         with:
           node-version: "18"
       - run: npm ci
-      - env:
-          TAG: ${{ github.ref_name }}
-        run: |
+      - run: |
           node scripts/release-notes.js --tag "$TAG" --out release-notes.md
           if gh release view "$TAG" >/dev/null 2>&1; then
             gh release edit "$TAG" --notes-file release-notes.md
@@ -29,4 +27,5 @@ jobs:
             gh release create "$TAG" --title "$TAG" --notes-file release-notes.md
           fi
         env:
+          TAG: ${{ github.ref_name }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
