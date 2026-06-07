@@ -1,7 +1,7 @@
 # SEO.md CLI
 
 <p align="center">
-  <img alt="SEO.md CLI banner" src="./assets/banner.png" />
+  <img alt="SEO.md CLI banner" src="./assets/logo.svg" />
 </p>
 
 The official CLI for the [SEO.md](https://seomd.dev) open standard — AEO (AI Engine Optimization) infrastructure for technical founders.
