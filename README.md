@@ -1,6 +1,6 @@
 # SEO.md CLI
 
-<p align="left" style="padding: 20px 0;">
+<p align="left" style="padding: 100px 0;">
   <img alt="SEO.md CLI logo" src="./assets/logo.svg" />
 </p>
 
