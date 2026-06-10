@@ -36,6 +36,12 @@ SEO.md is a structured, version-controlled specification for describing your sit
 npm install -g seomd-cli
 ```
 
+Or run without installing (zero-install):
+
+```bash
+npx seomd-cli init
+```
+
 Verify:
 
 ```bash
@@ -50,6 +56,14 @@ Run in the root of your project:
 
 ```bash
 seomd init
+```
+
+Or non-interactively with flags:
+
+```bash
+seomd init -y --type local
+# or
+seomd init --brand "Acme" --domain acme.com --primary-keyword "local seo"
 ```
 
 ### 2) Validate
@@ -74,24 +88,52 @@ seomd status --json
 
 ## Configuration
 
-Copy the example env file:
+Copy `.env.example` from your platform provider docs, or create one with the vars you need:
 
+Required for live audits:
 ```bash
-cp .env.example .env
+SEOMD_API_URL=
+SEOMD_API_KEY=your_key_here
 ```
 
-Environment variables:
+Optional:
+```bash
+SEOMD_PAYMENT_TOKEN= # x402 pay-per-scan token
+SEOMD_DOMAIN= # override domain header
+```
 
-- `SEOMD_API_URL` (optional) API base URL (defaults to `https://api.foxcite.com`)
-- `SEOMD_API_KEY` (optional) platform API key (human dashboard auth)
-- `SEOMD_PAYMENT_TOKEN` (optional) agent-native payment token (x402 pay-per-scan)
-- `SEOMD_DOMAIN` (optional) override domain header
+> If you don't have a platform key yet, `seomd init` still works without `.env`.
 
 ## Commands
 
 ### `seomd init`
 
 Scaffolds `SEO.md`, `SEO.REVERSE.md`, and the `.seomd/` intelligence directory.
+
+**Usage:**
+```bash
+seomd init                              # interactive 5-question flow
+seomd init -y --type local              # skip prompts, use defaults
+seomd init --brand "Acme" --domain acme.com  # non-interactive with partial flags
+seomd init --type saas --brand "MyApp" --domain myapp.com --primary-keyword "billing automation" --output ./new-project
+```
+
+**Options:**
+| Flag | Description |
+|------|-------------|
+| `-y, --yes` | skip prompts, use defaults |
+| `--type <type>` | site type: saas, ecommerce, local, blog, marketplace |
+| `--brand <name>` | brand name |
+| `--domain <domain>` | primary domain |
+| `--primary-keyword <keyword>` | primary keyword |
+| `--competitors <list>` | comma-separated competitor list |
+| `--output <dir>` | scaffold into a new (empty) directory instead of cwd |
+
+**Behavior:**
+- Interactive flow by default (5 questions)
+- Non-interactive when `-y` is set **OR** any config flag (`--brand`, `--domain`, `--primary-keyword`, `--competitors`) is provided
+- `--type` alone pre-selects site type in the interactive flow
+- `--output` writes all files to the target directory (must be empty or non-existent)
 
 ### `seomd validate`
 
@@ -116,6 +158,25 @@ Runs an AI search audit via your connected platform and writes results back into
 Pulls cached/latest platform intelligence and writes it back to the same files as `analyze`.
 
 - `--dry-run` prints a preview and does not modify files
+
+## Built-in Templates
+
+`seomd-cli` ships with type-specific templates under `src/templates/`. `seomd init --type <type>` uses the matching template automatically.
+
+| Type | Template dir | Best for |
+|------|-------------|----------|
+| `saas` | `src/templates/saas/` | Software products, B2B tools, web apps |
+| `blog` | `src/templates/blog/` | Content sites, newsletters, personal brands |
+| `ecommerce` | `src/templates/ecommerce/` | Online stores, DTC brands, product catalogs |
+| `local` | `src/templates/local/` | Service-area businesses, locations pages |
+| `marketplace` | `src/templates/marketplace/` | Two-sided platforms, directories |
+
+Each template contains:
+
+- `SEO.md` — pre-filled with type-specific intent queries, page structures, and negative keywords
+- `SEO.REVERSE.md` — reverse-engineer output scaffold with placeholders for competitor analysis
+
+Want to customize a template? Copy the relevant folder, edit the placeholders (`{{brand}}`, `{{domain}}`, etc.), and use `--type` with your custom scaffold.
 
 ## Local Development
 

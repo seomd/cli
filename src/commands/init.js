@@ -16,8 +16,19 @@ export async function initCommand(options) {
     console.log(chalk.dim('The open standard for AI-era SEO configuration.'));
     console.log('');
 
-    // Check if SEO.md already exists
-    const seomdPath = path.join(process.cwd(), 'SEO.md');
+    // Determine target directory
+    let workingDir = process.cwd();
+    if (options.output) {
+        const resolved = path.resolve(options.output);
+        if (await fs.pathExists(resolved) && (await fs.readdir(resolved)).length > 0) {
+            console.log(chalk.red(`Output directory must be empty or non-existent: ${resolved}`));
+            process.exit(1);
+        }
+        await fs.ensureDir(resolved);
+        workingDir = resolved;
+    }
+
+    const seomdPath = path.join(workingDir, 'SEO.md');
     if (await fs.pathExists(seomdPath)) {
         console.log(chalk.yellow('⚠ SEO.md already exists in this directory.'));
         const { overwrite } = await prompt({
@@ -34,14 +45,26 @@ export async function initCommand(options) {
 
     let answers;
 
-    if (options.yes) {
-        // Default values for --yes flag
+    // Mode 5: non-interactive if -y OR any config field provided
+    const hasConfigFlags =
+        options.brand !== undefined ||
+        options.domain !== undefined ||
+        options.primaryKeyword !== undefined ||
+        options.competitors !== undefined;
+
+    if (options.yes || hasConfigFlags) {
         answers = {
             site_type: options.type || 'saas',
-            domain: 'example.com',
-            brand: 'My Brand',
-            primary_keyword: '',
-            competitors: '',
+            domain: options.domain || 'example.com',
+            brand: options.brand || 'My Brand',
+            primary_keyword: options.primaryKeyword || '',
+            competitors: options.competitors
+                ? options.competitors
+                      .split(',')
+                      .map((c) => c.trim())
+                      .filter(Boolean)
+                      .slice(0, 3)
+                : [],
         };
     } else {
         // The 5-question init flow
@@ -109,21 +132,20 @@ export async function initCommand(options) {
     try {
         // 1. Generate SEO.md
         const seomdContent = generateSeoMd(answers);
-        await fs.writeFile(seomdPath, seomdContent, 'utf8');
+        await fs.writeFile(path.join(workingDir, 'SEO.md'), seomdContent, 'utf8');
         spinner.succeed(chalk.green('SEO.md created'));
 
         // 2. Generate SEO.REVERSE.md
-        const reversePath = path.join(process.cwd(), 'SEO.REVERSE.md');
         const reverseContent = generateReverseMd(answers);
-        await fs.writeFile(reversePath, reverseContent, 'utf8');
+        await fs.writeFile(path.join(workingDir, 'SEO.REVERSE.md'), reverseContent, 'utf8');
         spinner.succeed(chalk.green('SEO.REVERSE.md initialized'));
 
         // 3. Create .seomd/ directory structure
-        await createSeomdDir(process.cwd(), answers);
+        await createSeomdDir(workingDir, answers);
         spinner.succeed(chalk.green('.seomd/ directory created'));
 
         // 4. Add .seomd/ to .gitignore if it exists
-        await updateGitignore(process.cwd());
+        await updateGitignore(workingDir);
 
         console.log('');
         console.log(chalk.bold.green('✓ SEO.md initialized successfully'));

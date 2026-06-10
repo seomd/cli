@@ -1,7 +1,6 @@
 import chalk from 'chalk';
 import ora from 'ora';
 import fs from 'fs-extra';
-import path from 'path';
 import dotenv from 'dotenv';
 import { parseSeoMd } from '../utils/parser.js';
 import { client } from '../utils/api-client.js';

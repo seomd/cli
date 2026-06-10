@@ -25,6 +25,19 @@ program
     .description('Scaffold SEO.md for your project')
     .option('-y, --yes', 'skip prompts and use defaults')
     .option('--type <type>', 'site type: saas, ecommerce, local, blog, marketplace')
+    .option('--brand <brand>', 'brand name')
+    .option('--domain <domain>', 'primary domain')
+    .option('--primary-keyword <keyword>', 'primary keyword')
+    .option('--competitors <list>', 'comma-separated competitor list')
+    .option('--output <dir>', 'scaffold into a new directory instead of cwd')
+    .addHelpText('after', `
+
+Examples:
+  seomd init                              # interactive 5-question flow
+  seomd init -y --type local              # skip prompts, use defaults
+  seomd init --brand "Acme" --domain acme.com --primary-keyword "local seo"
+  seomd init --type saas --brand "MyApp" --domain myapp.com --output ./new-project
+`)
     .action(initCommand);
 
 program
@@ -33,23 +46,47 @@ program
     .option('--page <url>', 'analyze a specific page only')
     .option('--intent <category>', 'analyze a specific intent category only')
     .option('--engines <list>', 'comma-separated list of engines to scan (e.g. chatgpt,claude)')
+    .addHelpText('after', `
+
+Examples:
+  seomd analyze                           # full audit
+  seomd analyze --page /pricing           # single page audit
+  seomd analyze --intent transactional --engines chatgpt,claude
+`)
     .action(analyzeCommand);
 
 program
     .command('sync')
     .description('Sync latest platform intelligence to your SEO.md files')
     .option('--dry-run', 'preview changes without writing')
+    .addHelpText('after', `
+
+Examples:
+  seomd sync                              # sync latest data
+  seomd sync --dry-run                    # preview changes only
+`)
     .action(syncCommand);
 
 program
     .command('status')
     .description('Show current citation rates and gap scores')
     .option('--json', 'output as JSON')
+    .addHelpText('after', `
+
+Examples:
+  seomd status                            # human-readable summary
+  seomd status --json                     # machine-readable JSON
+`)
     .action(statusCommand);
 
 program
     .command('validate')
     .description('Validate your SEO.md against the spec')
+    .addHelpText('after', `
+
+Example:
+  seomd validate
+`)
     .action(validateCommand);
 
 program.parse();
