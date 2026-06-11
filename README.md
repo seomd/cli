@@ -91,12 +91,14 @@ seomd status --json
 Copy `.env.example` from your platform provider docs, or create one with the vars you need:
 
 Required for live audits:
+
 ```bash
 SEOMD_API_URL=
 SEOMD_API_KEY=your_key_here
 ```
 
 Optional:
+
 ```bash
 SEOMD_PAYMENT_TOKEN= # x402 pay-per-scan token
 SEOMD_DOMAIN= # override domain header
@@ -108,9 +110,10 @@ SEOMD_DOMAIN= # override domain header
 
 ### `seomd init`
 
-Scaffolds `SEO.md`, `SEO.REVERSE.md`, and the `.seomd/` intelligence directory.
+Scaffolds `SEO.md`, `SEO.REVERSE.md`, and the `.seo/` intelligence directory.
 
 **Usage:**
+
 ```bash
 seomd init                              # interactive 5-question flow
 seomd init -y --type local              # skip prompts, use defaults
@@ -119,6 +122,7 @@ seomd init --type saas --brand "MyApp" --domain myapp.com --primary-keyword "bil
 ```
 
 **Options:**
+
 | Flag | Description |
 |------|-------------|
 | `-y, --yes` | skip prompts, use defaults |
@@ -130,6 +134,7 @@ seomd init --type saas --brand "MyApp" --domain myapp.com --primary-keyword "bil
 | `--output <dir>` | scaffold into a new (empty) directory instead of cwd |
 
 **Behavior:**
+
 - Interactive flow by default (5 questions)
 - Non-interactive when `-y` is set **OR** any config flag (`--brand`, `--domain`, `--primary-keyword`, `--competitors`) is provided
 - `--type` alone pre-selects site type in the interactive flow
@@ -151,7 +156,7 @@ Runs an AI search audit via your connected platform and writes results back into
 
 - `SEO.md` (`_analysis` blocks)
 - `SEO.REVERSE.md` (generated reverse view)
-- `.seomd/pages/*.md` (per-page playbooks when available)
+- `.seo/pages/*.md` (per-page playbooks when available)
 
 ### `seomd sync`
 
@@ -223,9 +228,11 @@ To enable live intelligence writebacks (using automated platforms like [Foxcite]
 
 1. Obtain a developer API key from your platform provider.
 2. Export the key as an environment variable:
+
    ```bash
    export SEOMD_API_KEY="your_api_key_here"
    ```
+
 3. Run `seomd sync` or `seomd analyze`.
 
 _Note: Never commit your API keys or `.env` files containing keys to version control._

@@ -110,13 +110,13 @@ export async function writeReverseMd(cwd, response, defaultDomain = 'example.com
 }
 
 /**
- * Writes individual page playbooks into .seomd/pages/{id}.md files.
+ * Writes individual page playbooks into .seo/pages/{id}.md files.
  * 
  * @param {string} cwd - Current working directory
  * @param {any} response - The API response from analyze/sync
  */
 export async function writePageAnalysis(cwd, response) {
-    const seomdDir = path.join(cwd, '.seomd');
+    const seomdDir = path.join(cwd, '.seo');
     const pagesDir = path.join(seomdDir, 'pages');
 
     await fs.ensureDir(pagesDir);

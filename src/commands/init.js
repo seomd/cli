@@ -60,10 +60,10 @@ export async function initCommand(options) {
             primary_keyword: options.primaryKeyword || '',
             competitors: options.competitors
                 ? options.competitors
-                      .split(',')
-                      .map((c) => c.trim())
-                      .filter(Boolean)
-                      .slice(0, 3)
+                    .split(',')
+                    .map((c) => c.trim())
+                    .filter(Boolean)
+                    .slice(0, 3)
                 : [],
         };
     } else {
@@ -140,11 +140,11 @@ export async function initCommand(options) {
         await fs.writeFile(path.join(workingDir, 'SEO.REVERSE.md'), reverseContent, 'utf8');
         spinner.succeed(chalk.green('SEO.REVERSE.md initialized'));
 
-        // 3. Create .seomd/ directory structure
+        // 3. Create .seo/ directory structure
         await createSeomdDir(workingDir, answers);
-        spinner.succeed(chalk.green('.seomd/ directory created'));
+        spinner.succeed(chalk.green('.seo/ directory created'));
 
-        // 4. Add .seomd/ to .gitignore if it exists
+        // 4. Add .seo/ to .gitignore if it exists
         await updateGitignore(workingDir);
 
         console.log('');
@@ -153,7 +153,7 @@ export async function initCommand(options) {
         console.log(chalk.dim('Files created:'));
         console.log('  ' + chalk.cyan('SEO.md') + chalk.dim('             — your living SEO config'));
         console.log('  ' + chalk.cyan('SEO.REVERSE.md') + chalk.dim('     — reverse engineer output (platform generated)'));
-        console.log('  ' + chalk.cyan('.seomd/') + chalk.dim('            — intelligence directory'));
+        console.log('  ' + chalk.cyan('.seo/') + chalk.dim('            — intelligence directory'));
         console.log('');
         console.log(chalk.dim('Next steps:'));
         console.log('  ' + chalk.white('npx seomd analyze') + chalk.dim('  — run your first citation analysis'));
@@ -171,11 +171,11 @@ export async function initCommand(options) {
 
 async function updateGitignore(cwd) {
     const gitignorePath = path.join(cwd, '.gitignore');
-    const entry = '\n# seomd intelligence directory\n.seomd/reports/\n';
+    const entry = '\n# seomd intelligence directory\n.seo/reports/\n';
 
     if (await fs.pathExists(gitignorePath)) {
         const content = await fs.readFile(gitignorePath, 'utf8');
-        if (!content.includes('.seomd')) {
+        if (!content.includes('.seo')) {
             await fs.appendFile(gitignorePath, entry);
         }
     }

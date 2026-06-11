@@ -44,7 +44,7 @@ describe('validate', () => {
   test('passes with warnings for a valid SEO.md', async () => {
     await writeFullTemplateSeoMd(cwd);
 
-    const logSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
+    const logSpy = jest.spyOn(console, 'log').mockImplementation(() => { });
 
     await validateCommand();
 
@@ -59,7 +59,7 @@ describe('validate', () => {
   test('fails when SEO.md is missing required sections', async () => {
     await writeSeoMdFixture(cwd);
 
-    const logSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
+    const logSpy = jest.spyOn(console, 'log').mockImplementation(() => { });
 
     await validateCommand();
 
@@ -91,7 +91,7 @@ describe('status', () => {
   test('returns no_data JSON when no analysis exists', async () => {
     await writeFullTemplateSeoMd(cwd);
 
-    const logSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
+    const logSpy = jest.spyOn(console, 'log').mockImplementation(() => { });
 
     await statusCommand({ json: true });
 
@@ -114,7 +114,7 @@ describe('status', () => {
     const { writeAnalysisToSeoMd } = await import('../src/utils/writeback.js');
     await writeAnalysisToSeoMd(doc, makeApiResponse(), cwd);
 
-    const logSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
+    const logSpy = jest.spyOn(console, 'log').mockImplementation(() => { });
 
     await statusCommand({ json: true });
 
@@ -252,10 +252,10 @@ describe('init', () => {
 
     expect(await fs.pathExists(path.join(cwd, 'SEO.md'))).toBe(true);
     expect(await fs.pathExists(path.join(cwd, 'SEO.REVERSE.md'))).toBe(true);
-    expect(await fs.pathExists(path.join(cwd, '.seomd', 'README.md'))).toBe(true);
+    expect(await fs.pathExists(path.join(cwd, '.seo', 'README.md'))).toBe(true);
 
     const gitignore = await fs.readFile(path.join(cwd, '.gitignore'), 'utf8');
-    expect(gitignore).toContain('.seomd/reports/');
+    expect(gitignore).toContain('.seo/reports/');
   });
 });
 
@@ -292,7 +292,7 @@ describe('sync', () => {
     expect(reverse).toContain('# SEO.REVERSE.md');
     expect(reverse).toContain('source: foxcite');
 
-    const pageMd = await fs.readFile(path.join(cwd, '.seomd', 'pages', 'homepage.md'), 'utf8');
+    const pageMd = await fs.readFile(path.join(cwd, '.seo', 'pages', 'homepage.md'), 'utf8');
     expect(pageMd).toContain('# homepage');
   });
 
@@ -371,7 +371,7 @@ describe('analyze', () => {
     expect(payload.pages).toHaveLength(1);
     expect(payload.pages[0].url).toBe('/pricing');
 
-    const pageMd = await fs.readFile(path.join(cwd, '.seomd', 'pages', 'pricing.md'), 'utf8');
+    const pageMd = await fs.readFile(path.join(cwd, '.seo', 'pages', 'pricing.md'), 'utf8');
     expect(pageMd).toContain('# pricing');
   });
 });

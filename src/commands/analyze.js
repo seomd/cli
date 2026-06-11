@@ -11,16 +11,16 @@ dotenv.config();
 function matchRoute(pattern, url) {
     const cleanPattern = pattern.replace(/\/$/, '');
     const cleanUrl = url.replace(/\/$/, '');
-    
+
     if (cleanPattern.toLowerCase() === cleanUrl.toLowerCase()) {
         return true;
     }
-    
+
     // Replace "/[param]" with optional group "(?:/([^/]+))?"
     const regexPattern = cleanPattern
         .replace(/\/\[[^\]]+\]/g, '(?:\\/([^/]+))?')
         .replace(/\//g, '\\/');
-        
+
     const regex = new RegExp('^' + regexPattern + '\\/?$', 'i');
     return regex.test(url);
 }
@@ -147,7 +147,7 @@ export async function analyzeCommand(options) {
         const brandName = data.identity?.brand || 'My Brand';
         await writeReverseMd(cwd, results, domain, brandName);
 
-        // Writeback to .seomd/pages/*.md
+        // Writeback to .seo/pages/*.md
         await writePageAnalysis(cwd, results);
 
         spinner.succeed(chalk.green('Analysis completed successfully!'));
@@ -168,7 +168,7 @@ export async function analyzeCommand(options) {
         console.log('');
         console.log(chalk.green('✔ SEO.md updated.'));
         console.log(chalk.green('✔ SEO.REVERSE.md updated.'));
-        console.log(chalk.green('✔ .seomd/pages/ playbooks generated.'));
+        console.log(chalk.green('✔ .seo/pages/ playbooks generated.'));
         console.log('');
 
     } catch (err) {

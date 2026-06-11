@@ -29,6 +29,6 @@ export default [
         },
     },
     {
-        ignores: ['node_modules/', 'dist/', 'coverage/', '.seomd/', '*.md'],
+        ignores: ['node_modules/', 'dist/', 'coverage/', '.seo/', '*.md'],
     },
 ];

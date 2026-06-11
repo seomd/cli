@@ -90,7 +90,7 @@ export async function syncCommand(options) {
         const brandName = data.identity?.brand || 'My Brand';
         await writeReverseMd(cwd, results, domain, brandName);
 
-        // Writeback to .seomd/pages/*.md
+        // Writeback to .seo/pages/*.md
         await writePageAnalysis(cwd, results);
 
         spinner.succeed(chalk.green('Sync completed successfully!'));
@@ -111,7 +111,7 @@ export async function syncCommand(options) {
         console.log('');
         console.log(chalk.green('✔ SEO.md updated.'));
         console.log(chalk.green('✔ SEO.REVERSE.md updated.'));
-        console.log(chalk.green('✔ .seomd/pages/ playbooks synchronized.'));
+        console.log(chalk.green('✔ .seo/pages/ playbooks synchronized.'));
         console.log('');
 
     } catch (err) {
