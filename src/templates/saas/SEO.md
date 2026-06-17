@@ -4,14 +4,6 @@
 
 ### spec v1.0 | <https://seomd.dev>
 
-#### generated: {{date}}
-
-## FIELD OWNERSHIP
-
-### no prefix     = founder declares (you own this)
-
-### _analysis:    = platform writes back (do not edit manually)
-
 ## Site
 
 site:
@@ -36,8 +28,6 @@ identity:
 
 keywords:
 
-### FOUNDER DECLARES
-
   primary: "{{primary_keyword}}"
   secondary: []               # add your secondary keywords
   negative:                   # terms that dilute your intent signal
@@ -52,29 +42,9 @@ keywords:
   long_tail: []               # add long-tail variations
   seasonal: null              # add seasonal terms if applicable
 
-### PLATFORM WRITES BACK
-
-  _analysis:
-    source: null
-    primary_search_volume: null
-    primary_intent_type: null
-    primary_trend: null
-    recommended_secondary: []
-    negative_additions_suggested: []
-    last_analyzed: null
-    next_analysis: null
-
 ## Intent
 
 intent:
-
-### FOUNDER DECLARES
-
-#### Add queries your buyers actually type into AI engines
-
-#### Tip: think about what someone asks ChatGPT or Perplexity
-
-#### when they are looking for a solution like yours
 
   informational:
     priority: medium
@@ -108,46 +78,10 @@ intent:
       - "best {{primary_keyword}}"
       - "top {{primary_keyword}} 2026"
 
-### PLATFORM WRITES BACK
-
-  _analysis:
-    source: null
-    last_analyzed: null
-    next_analysis: null
-    informational:
-      citation_rate: null
-      top_cited_competitor: null
-      gap_score: null
-      trend: null
-    comparison:
-      citation_rate: null
-      top_cited_competitor: null
-      gap_score: null
-      trend: null
-    transactional:
-      citation_rate: null
-      top_cited_competitor: null
-      gap_score: null
-      trend: null
-    reputational:
-      citation_rate: null
-      top_cited_competitor: null
-      gap_score: null
-      trend: null
-    category:
-      citation_rate: null
-      top_cited_competitor: null
-      gap_score: null
-      trend: null
-
 ## Pages
 
 pages:
   site_type: saas
-
-### FOUNDER DECLARES
-
-#### status: live | draft | planned
 
   required:
     - id: homepage
@@ -210,20 +144,9 @@ pages:
       status: planned
       priority: 10
 
-### PLATFORM WRITES BACK
-
-  _analysis:
-    source: null
-    last_analyzed: null
-    pages: []
-    missing_pages: []
-    build_order_recommendation: []
-
 ## Copy
 
 copy:
-
-### FOUNDER DECLARES
 
   h1_contains_primary_keyword: true
   meta_description_length: 150-160
@@ -239,8 +162,6 @@ copy:
 
 structure:
 
-### FOUNDER DECLARES
-
   answer_first: true           # direct answer in first 50 words
   faq_section_required: true   # on all key pages
   faq_minimum_questions: 6
@@ -252,8 +173,6 @@ structure:
 ## Authority
 
 authority:
-
-### FOUNDER DECLARES
 
   cite_sources: true
   expert_quotes: false         # set true when you have quotes
@@ -267,8 +186,6 @@ authority:
 
 schema:
 
-### FOUNDER DECLARES
-
   types:
     - SoftwareApplication
     - Organization
@@ -281,8 +198,6 @@ schema:
 ## Crawl
 
 crawl:
-
-### FOUNDER DECLARES
 
   sitemap: /sitemap.xml
   robots_txt: /robots.txt
@@ -306,8 +221,6 @@ crawl:
 
 performance:
 
-### FOUNDER DECLARES
-
   lcp: 2.5s
   cls: 0.1
   fid: 100ms
@@ -318,10 +231,6 @@ performance:
 
 aeo:
 
-### FOUNDER DECLARES
-
-### AI Engine Optimization rules
-
   answer_first_format: true
   faq_on_all_key_pages: true
   structured_data_priority: high
@@ -329,26 +238,9 @@ aeo:
   competitors_to_monitor:
 {{competitors_to_monitor}}
 
-### PLATFORM WRITES BACK
-
-  _analysis:
-    source: null
-    overall_citation_rate: null
-    overall_gap_score: null
-    engines_tracked:
-      - chatgpt
-      - perplexity
-      - claude
-      - gemini
-      - grok
-    last_analyzed: null
-    next_analysis: null
-
 ## Monitoring
 
 monitoring:
-
-### FOUNDER DECLARES
 
   sync_schedule: monthly       # monthly | weekly | on_demand
   auto_commit: false           # platform commits directly to repo
@@ -359,14 +251,7 @@ monitoring:
 
 ## Platform Connection
 
-### Connect at <https://seomd.dev/connect>
-
-### Add SEOMD_API_KEY to your .env file
-
-### Never commit your API key to version control
-
 platform:
   provider: null               # foxcite | manual | ahrefs | semrush
   project_id: null
 
-### api_key: loaded from SEOMD_API_KEY environment variable

@@ -251,11 +251,8 @@ describe('init', () => {
     await initCommand({ yes: true, type: 'saas' });
 
     expect(await fs.pathExists(path.join(cwd, 'SEO.md'))).toBe(true);
-    expect(await fs.pathExists(path.join(cwd, 'SEO.REVERSE.md'))).toBe(true);
+    expect(await fs.pathExists(path.join(cwd, '.seo', 'REVERSE.md'))).toBe(true);
     expect(await fs.pathExists(path.join(cwd, '.seo', 'README.md'))).toBe(true);
-
-    const gitignore = await fs.readFile(path.join(cwd, '.gitignore'), 'utf8');
-    expect(gitignore).toContain('.seo/reports/');
   });
 });
 
@@ -283,13 +280,13 @@ describe('sync', () => {
 
     await syncCommand({ dryRun: false });
 
-    const seomd = await fs.readFile(path.join(cwd, 'SEO.md'), 'utf8');
-    expect(seomd).toContain('overall_gap_score: 42');
-    expect(seomd).toContain('overall_citation_rate: 0.5');
-    expect(seomd).toContain('source: foxcite');
+    const statusYaml = await fs.readFile(path.join(cwd, '.seo', 'STATUS.yml'), 'utf8');
+    expect(statusYaml).toContain('overall_gap_score: 42');
+    expect(statusYaml).toContain('overall_citation_rate: 0.5');
+    expect(statusYaml).toContain('source: foxcite');
 
-    const reverse = await fs.readFile(path.join(cwd, 'SEO.REVERSE.md'), 'utf8');
-    expect(reverse).toContain('# SEO.REVERSE.md');
+    const reverse = await fs.readFile(path.join(cwd, '.seo', 'REVERSE.md'), 'utf8');
+    expect(reverse).toContain('# .seo/REVERSE.md');
     expect(reverse).toContain('source: foxcite');
 
     const pageMd = await fs.readFile(path.join(cwd, '.seo', 'pages', 'homepage.md'), 'utf8');
@@ -305,7 +302,7 @@ describe('sync', () => {
 
     const afterSeoMd = await fs.readFile(path.join(cwd, 'SEO.md'), 'utf8');
     expect(afterSeoMd).toBe(beforeSeoMd);
-    expect(await fs.pathExists(path.join(cwd, 'SEO.REVERSE.md'))).toBe(false);
+    expect(await fs.pathExists(path.join(cwd, '.seo', 'REVERSE.md'))).toBe(false);
   });
 });
 
@@ -346,8 +343,8 @@ describe('analyze', () => {
       comparison: ['comp vs example brand'],
     });
 
-    const seomd = await fs.readFile(path.join(cwd, 'SEO.md'), 'utf8');
-    expect(seomd).toContain('overall_gap_score: 42');
+    const statusYaml = await fs.readFile(path.join(cwd, '.seo', 'STATUS.yml'), 'utf8');
+    expect(statusYaml).toContain('overall_gap_score: 42');
   });
 
   test('--page falls back when no pages match', async () => {

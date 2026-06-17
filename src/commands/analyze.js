@@ -105,7 +105,7 @@ export async function analyzeCommand(options) {
     }
 
     // Extract engines
-    let engines = data.aeo?._analysis?.engines_tracked || ['ChatGPT'];
+    let engines = ['ChatGPT', 'Perplexity', 'Claude']; // Default since we removed _analysis
     if (options.engines) {
         engines = options.engines.split(',').map(e => e.trim());
     }
@@ -140,10 +140,10 @@ export async function analyzeCommand(options) {
 
         spinner.text = 'Writing analysis blocks back to repository files...';
 
-        // Writeback to SEO.md
+        // Writeback to .seo/STATUS.yml
         await writeAnalysisToSeoMd(doc, results, cwd);
 
-        // Writeback to SEO.REVERSE.md
+        // Writeback to .seo/REVERSE.md
         const brandName = data.identity?.brand || 'My Brand';
         await writeReverseMd(cwd, results, domain, brandName);
 
@@ -166,8 +166,8 @@ export async function analyzeCommand(options) {
         console.log(`Next Analysis Target  : ${chalk.dim(aeo.next_analysis)}`);
         console.log('-----------------------');
         console.log('');
-        console.log(chalk.green('✔ SEO.md updated.'));
-        console.log(chalk.green('✔ SEO.REVERSE.md updated.'));
+        console.log(chalk.green('✔ .seo/STATUS.yml updated.'));
+        console.log(chalk.green('✔ .seo/REVERSE.md updated.'));
         console.log(chalk.green('✔ .seo/pages/ playbooks generated.'));
         console.log('');
 

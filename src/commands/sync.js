@@ -83,10 +83,10 @@ export async function syncCommand(options) {
 
         spinner.text = 'Updating repository files...';
 
-        // Writeback to SEO.md
+        // Writeback to .seo/STATUS.yml
         await writeAnalysisToSeoMd(doc, results, cwd);
 
-        // Writeback to SEO.REVERSE.md
+        // Writeback to .seo/REVERSE.md
         const brandName = data.identity?.brand || 'My Brand';
         await writeReverseMd(cwd, results, domain, brandName);
 
@@ -109,8 +109,8 @@ export async function syncCommand(options) {
         console.log(`Next Analysis Target  : ${chalk.dim(aeo.next_analysis)}`);
         console.log('----------------------------');
         console.log('');
-        console.log(chalk.green('✔ SEO.md updated.'));
-        console.log(chalk.green('✔ SEO.REVERSE.md updated.'));
+        console.log(chalk.green('✔ .seo/STATUS.yml updated.'));
+        console.log(chalk.green('✔ .seo/REVERSE.md updated.'));
         console.log(chalk.green('✔ .seo/pages/ playbooks synchronized.'));
         console.log('');
 

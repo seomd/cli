@@ -1,14 +1,26 @@
 import chalk from 'chalk';
+import fs from 'fs-extra';
+import path from 'path';
+import YAML from 'yaml';
 import { parseSeoMd } from '../utils/parser.js';
 
 export async function statusCommand(options) {
     try {
-        const { data } = await parseSeoMd(process.cwd());
+        const cwd = process.cwd();
+        const { data } = await parseSeoMd(cwd);
+        
+        let statusData = {};
+        const statusPath = path.join(cwd, '.seo', 'STATUS.yml');
+        
+        if (await fs.pathExists(statusPath)) {
+            const content = await fs.readFile(statusPath, 'utf8');
+            statusData = YAML.parse(content) || {};
+        }
 
-        const aeoAnalysis = data.aeo?._analysis || {};
-        const intentAnalysis = data.intent?._analysis || {};
+        const aeoAnalysis = statusData.aeo || {};
+        const intentAnalysis = statusData.intent || {};
         const pagesRequired = data.pages?.required || [];
-        const pagesAnalysis = data.pages?._analysis?.pages || [];
+        const pagesAnalysis = statusData.pages?.pages || [];
 
         // Check if there is any analysis data
         const hasOverallData = aeoAnalysis.overall_citation_rate !== null && aeoAnalysis.overall_citation_rate !== undefined;
@@ -18,7 +30,7 @@ export async function statusCommand(options) {
                 console.log(JSON.stringify({ status: "no_data", message: "No analysis data found" }, null, 2));
             } else {
                 console.log('');
-                console.log(chalk.yellow('⚠ No analysis data found in SEO.md.'));
+                console.log(chalk.yellow('⚠ No analysis data found in .seo/STATUS.yml.'));
                 console.log('');
                 console.log('To populate analysis data:');
                 console.log(`  1. Get an API key at ${chalk.cyan('https://seomd.dev/connect')}`);
@@ -47,7 +59,7 @@ export async function statusCommand(options) {
                 overall: {
                     citation_rate: aeoAnalysis.overall_citation_rate,
                     gap_score: aeoAnalysis.overall_gap_score,
-                    last_analyzed: aeoAnalysis.last_analyzed || null,
+                    last_analyzed: statusData.last_analyzed || null,
                 },
                 intent: {},
                 pages: []
@@ -85,7 +97,7 @@ export async function statusCommand(options) {
         // Output beautiful terminal dashboard
         console.log('');
         console.log(chalk.bold('SEO.md Status Dashboard') + chalk.dim(` — ${data.identity?.brand || 'Brand'} (${data.site?.domain || 'domain'})`));
-        console.log(chalk.dim(`Last analyzed: ${aeoAnalysis.last_analyzed || 'N/A'}`));
+        console.log(chalk.dim(`Last analyzed: ${statusData.last_analyzed || 'N/A'}`));
         console.log(chalk.dim('─'.repeat(60)));
         
         // Overall block

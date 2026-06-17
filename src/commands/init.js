@@ -135,25 +135,24 @@ export async function initCommand(options) {
         await fs.writeFile(path.join(workingDir, 'SEO.md'), seomdContent, 'utf8');
         spinner.succeed(chalk.green('SEO.md created'));
 
-        // 2. Generate SEO.REVERSE.md
-        const reverseContent = generateReverseMd(answers);
-        await fs.writeFile(path.join(workingDir, 'SEO.REVERSE.md'), reverseContent, 'utf8');
-        spinner.succeed(chalk.green('SEO.REVERSE.md initialized'));
-
-        // 3. Create .seo/ directory structure
+        // 2. Create .seo/ directory structure
         await createSeomdDir(workingDir, answers);
         spinner.succeed(chalk.green('.seo/ directory created'));
 
-        // 4. Add .seo/ to .gitignore if it exists
-        await updateGitignore(workingDir);
+        // 3. Generate .seo/REVERSE.md
+        const reverseContent = generateReverseMd(answers);
+        await fs.writeFile(path.join(workingDir, '.seo', 'REVERSE.md'), reverseContent, 'utf8');
+        spinner.succeed(chalk.green('.seo/REVERSE.md initialized'));
+
+
 
         console.log('');
         console.log(chalk.bold.green('✓ SEO.md initialized successfully'));
         console.log('');
         console.log(chalk.dim('Files created:'));
         console.log('  ' + chalk.cyan('SEO.md') + chalk.dim('             — your living SEO config'));
-        console.log('  ' + chalk.cyan('SEO.REVERSE.md') + chalk.dim('     — reverse engineer output (platform generated)'));
-        console.log('  ' + chalk.cyan('.seo/') + chalk.dim('            — intelligence directory'));
+        console.log('  ' + chalk.cyan('.seo/REVERSE.md') + chalk.dim('    — reverse engineer output (platform generated)'));
+        console.log('  ' + chalk.cyan('.seo/') + chalk.dim('              — intelligence directory'));
         console.log('');
         console.log(chalk.dim('Next steps:'));
         console.log('  ' + chalk.white('npx seomd analyze') + chalk.dim('  — run your first citation analysis'));
@@ -166,17 +165,5 @@ export async function initCommand(options) {
         spinner.fail(chalk.red('Failed to scaffold SEO.md'));
         console.error(chalk.dim(err.message));
         process.exit(1);
-    }
-}
-
-async function updateGitignore(cwd) {
-    const gitignorePath = path.join(cwd, '.gitignore');
-    const entry = '\n# seomd intelligence directory\n.seo/reports/\n';
-
-    if (await fs.pathExists(gitignorePath)) {
-        const content = await fs.readFile(gitignorePath, 'utf8');
-        if (!content.includes('.seo')) {
-            await fs.appendFile(gitignorePath, entry);
-        }
     }
 }
