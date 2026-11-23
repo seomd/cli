@@ -77,6 +77,7 @@ program
     .command('generate <target>')
     .description('Generate robots.txt, llms.txt, or JSON-LD schema from SEO.md (offline)')
     .option('--out <file>', 'write output to file instead of stdout')
+    .option('--strict', 'fail instead of warning when SEO.md still has template text')
     .addHelpText('after', `
 
 Targets:

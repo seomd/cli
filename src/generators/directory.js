@@ -15,11 +15,10 @@ export async function createSeomdDir(cwd, answers) {
 
     await fs.ensureDir(path.join(seomdDir, 'pages'));
 
-    await fs.writeFile(
-        path.join(seomdDir, 'README.md'),
-        generateSeomdReadme(brand, domain),
-        'utf8'
-    );
+    const readmePath = path.join(seomdDir, 'README.md');
+    if (!(await fs.pathExists(readmePath))) {
+        await fs.writeFile(readmePath, generateSeomdReadme(brand, domain), 'utf8');
+    }
 }
 
 function generateSeomdReadme(brand, domain) {

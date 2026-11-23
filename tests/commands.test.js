@@ -168,7 +168,7 @@ describe('init (v2)', () => {
         await fs.writeFile(path.join(cwd, 'CLAUDE.md'), '# CLAUDE.md\n\nExisting rules.\n', 'utf8');
 
         await initCommand({ yes: true, type: 'saas' });
-        await initCommand({ yes: true, type: 'saas' });
+        await initCommand({ yes: true, type: 'saas', force: true });
 
         const claudeMd = await fs.readFile(path.join(cwd, 'CLAUDE.md'), 'utf8');
         expect(claudeMd).toContain('Existing rules.');
@@ -218,6 +218,109 @@ describe('init (v2)', () => {
         expect(data.site.domain).toBe('acme.com');
         expect(data.site.canonical).toBe('https://acme.com');
         expect(data.keywords.primary).toBe('billing: automation "pro"');
+    });
+
+    test('-y refuses to overwrite an existing v2 SEO.md without --force', async () => {
+        await initCommand({ yes: true, type: 'saas', primaryKeyword: 'invoice software' });
+        const before = await fs.readFile(path.join(cwd, 'SEO.md'), 'utf8');
+
+        process.exitCode = undefined;
+        await initCommand({ yes: true, type: 'saas', primaryKeyword: 'something else' });
+
+        expect(process.exitCode).toBe(1);
+        expect(await fs.readFile(path.join(cwd, 'SEO.md'), 'utf8')).toBe(before);
+        expect(await fs.pathExists(path.join(cwd, 'SEO.md.bak'))).toBe(false);
+    });
+
+    test('--force backs up the existing SEO.md before regenerating', async () => {
+        await initCommand({ yes: true, type: 'saas', primaryKeyword: 'invoice software' });
+        const before = await fs.readFile(path.join(cwd, 'SEO.md'), 'utf8');
+
+        await initCommand({ yes: true, type: 'saas', force: true, primaryKeyword: 'billing api' });
+
+        expect(process.exitCode).toBe(0);
+        expect(await fs.readFile(path.join(cwd, 'SEO.md.bak'), 'utf8')).toBe(before);
+        const { data } = await parseSeoMd(cwd);
+        expect(data.keywords.primary).toBe('billing api');
+    });
+
+    test('never overwrites existing .seo/REVERSE.md or .seo/README.md', async () => {
+        await fs.ensureDir(path.join(cwd, '.seo'));
+        await fs.writeFile(path.join(cwd, '.seo', 'REVERSE.md'), 'provider intelligence', 'utf8');
+        await fs.writeFile(path.join(cwd, '.seo', 'README.md'), 'my notes', 'utf8');
+
+        await initCommand({ yes: true, type: 'saas' });
+
+        expect(process.exitCode).toBe(0);
+        expect(await fs.readFile(path.join(cwd, '.seo', 'REVERSE.md'), 'utf8')).toBe('provider intelligence');
+        expect(await fs.readFile(path.join(cwd, '.seo', 'README.md'), 'utf8')).toBe('my notes');
+    });
+
+    test('-y upgrades a v1 SEO.md to v2, carrying values over and keeping a backup', async () => {
+        const v1 = [
+            '# SEO.md',
+            'site:',
+            '  type: saas',
+            '  domain: acme.com',
+            '  canonical: <https://acme.com>',
+            '  locale: en-GB',
+            'identity:',
+            '  brand: "Acme"',
+            '  tagline: "Usage-based billing for APIs"',
+            'keywords:',
+            '  primary: "api billing platform"',
+            '  secondary: ["metered billing"]',
+            '  negative: ["free"]',
+            'intent:',
+            '  comparison:',
+            '    priority: high',
+            '    queries: ["stripe billing vs acme"]',
+            '  _analysis:',
+            '    source: foxcite',
+            'pages:',
+            '  site_type: saas',
+            '  required:',
+            '    - id: homepage',
+            '      url: /',
+            '      primary_keyword: "api billing platform"',
+            '      status: live',
+            '      priority: 1',
+            '    - id: changelog',
+            '      url: /changelog',
+            '      primary_keyword: "acme changelog"',
+            '      status: planned',
+            '      priority: 2',
+            'aeo:',
+            '  competitors_to_monitor: ["stripe.com"]',
+            'platform:',
+            '  provider: foxcite',
+            '',
+        ].join('\n');
+        await fs.writeFile(path.join(cwd, 'SEO.md'), v1, 'utf8');
+
+        await initCommand({ yes: true });
+
+        expect(process.exitCode).toBe(0);
+        expect(await fs.readFile(path.join(cwd, 'SEO.md.bak'), 'utf8')).toBe(v1);
+
+        const { format, data, body } = await parseSeoMd(cwd);
+        expect(format).toBe('v2');
+        expect(data.site.brand).toBe('Acme');
+        expect(data.site.domain).toBe('acme.com');
+        expect(data.site.canonical).toBe('https://acme.com');
+        expect(data.site.locale).toBe('en-GB');
+        expect(data.keywords.primary).toBe('api billing platform');
+        expect(data.keywords.secondary).toEqual(['metered billing']);
+        expect(data.keywords.negative).toEqual(['free']);
+        expect(data.intent.comparison.queries).toEqual(['stripe billing vs acme']);
+        expect(data.intent._analysis).toBeUndefined();
+        expect(data.competitors).toEqual([{ domain: 'stripe.com' }]);
+        expect(data.provider.name).toBe('foxcite');
+        expect(data.pages.find((p) => p.url === '/changelog').keyword).toBe('acme changelog');
+        expect(body).toContain('Usage-based billing for APIs');
+
+        await validateCommand({ json: true });
+        expect(process.exitCode).toBe(0);
     });
 
     test('rejects invalid --type', async () => {
@@ -322,6 +425,72 @@ describe('generate & check & doctor (local zero-API-key loop)', () => {
         const schema = JSON.parse(await fs.readFile(path.join(cwd, 'public', 'schema.json'), 'utf8'));
         expect(schema['@context']).toBe('https://schema.org');
         expect(Array.isArray(schema['@graph'])).toBe(true);
+
+        logSpy.mockRestore();
+    });
+
+    test('generate keeps init template text out of llms.txt and JSON-LD', async () => {
+        await writeV2SeoMd(cwd);
+        const logSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
+        const errSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+
+        await generateCommand('llms', { out: 'public/llms.txt' });
+        await generateCommand('schema', { out: 'public/schema.json' });
+
+        const llms = await fs.readFile(path.join(cwd, 'public', 'llms.txt'), 'utf8');
+        expect(llms).not.toMatch(/replace with/i);
+        expect(llms).toContain('> Example Brand (example.com) — example keyword.');
+
+        const schemaRaw = await fs.readFile(path.join(cwd, 'public', 'schema.json'), 'utf8');
+        expect(schemaRaw).not.toMatch(/replace with/i);
+        const schema = JSON.parse(schemaRaw);
+        expect(schema['@graph'].some((n) => n['@type'] === 'FAQPage')).toBe(false);
+
+        expect(errSpy.mock.calls.join('\n')).toContain('One-liner');
+        expect(process.exitCode).toBe(0);
+
+        logSpy.mockRestore();
+        errSpy.mockRestore();
+    });
+
+    test('generate --strict refuses to write output while template text remains', async () => {
+        await writeV2SeoMd(cwd);
+        const errSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+
+        await generateCommand('llms', { out: 'public/llms.txt', strict: true });
+
+        expect(process.exitCode).toBe(1);
+        expect(await fs.pathExists(path.join(cwd, 'public', 'llms.txt'))).toBe(false);
+        errSpy.mockRestore();
+    });
+
+    test('generate uses the founder one-liner in llms.txt and the FAQ answer', async () => {
+        await writeV2SeoMd(cwd, { carry: { tagline: 'Usage-based billing for APIs.' } });
+        const logSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
+        const errSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+
+        await generateCommand('llms', { out: 'public/llms.txt' });
+        await generateCommand('schema', { out: 'public/schema.json' });
+
+        const llms = await fs.readFile(path.join(cwd, 'public', 'llms.txt'), 'utf8');
+        expect(llms).toContain('> Example Brand — Usage-based billing for APIs.');
+        const schema = JSON.parse(await fs.readFile(path.join(cwd, 'public', 'schema.json'), 'utf8'));
+        const faq = schema['@graph'].find((n) => n['@type'] === 'FAQPage');
+        expect(faq.mainEntity[0].acceptedAnswer.text).toBe('Example Brand — Usage-based billing for APIs.');
+
+        logSpy.mockRestore();
+        errSpy.mockRestore();
+    });
+
+    test('validate warns when Canonical Product Facts still hold template text', async () => {
+        await writeV2SeoMd(cwd);
+        const logSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
+
+        await validateCommand({ json: true });
+        const output = logSpy.mock.calls.map((c) => c.join(' ')).join('\n');
+        expect(process.exitCode).toBe(0);
+        expect(output).toContain('template text');
+        expect(output).toContain('Pricing / offer');
 
         logSpy.mockRestore();
     });

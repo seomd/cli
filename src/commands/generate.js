@@ -3,6 +3,7 @@ import fs from 'fs-extra';
 import path from 'path';
 import { parseSeoMd, getBrand, getPages } from '../utils/parser.js';
 import { AI_BOTS, SCHEMA_TYPES } from '../utils/constants.js';
+import { getFact, findPlaceholders } from '../utils/placeholders.js';
 
 const VALID_TARGETS = ['robots', 'llms', 'schema'];
 
@@ -45,11 +46,9 @@ export function buildLlmsTxt(data, body = '') {
     const primaryKeyword = data.keywords?.primary || '';
     const pages = getPages(data);
 
-    // Extract one-liner from Markdown body if present
-    const oneLinerMatch = body.match(/\*\*One-liner:\*\*\s*(.+)/i);
-    const summary = oneLinerMatch
-        ? oneLinerMatch[1].trim()
-        : `${brand} (${domain}) — ${primaryKeyword || 'official documentation and product pages'}.`;
+    // Use the founder's one-liner from the Markdown body, unless it is still init's template text
+    const summary = getFact(body, 'One-liner')
+        || `${brand} (${domain}) — ${primaryKeyword || 'official documentation and product pages'}.`;
 
     const lines = [
         `# ${brand}`,
@@ -86,7 +85,7 @@ export function buildLlmsTxt(data, body = '') {
     return lines.join('\n');
 }
 
-export function buildSchemaJsonLd(data) {
+export function buildSchemaJsonLd(data, body = '') {
     const brand = getBrand(data);
     const domain = data.site?.domain || 'example.com';
     const canonical = (data.site?.canonical || `https://${domain}`).replace(/\/$/, '');
@@ -130,7 +129,9 @@ export function buildSchemaJsonLd(data) {
         });
     }
 
-    if (types.includes('FAQPage')) {
+    // Only emit an FAQ answer the founder actually wrote; never publish template text as a fact
+    const oneLiner = getFact(body, 'One-liner');
+    if (types.includes('FAQPage') && oneLiner) {
         graph.push({
             '@type': 'FAQPage',
             mainEntity: [
@@ -139,7 +140,7 @@ export function buildSchemaJsonLd(data) {
                     name: `What is ${brand}?`,
                     acceptedAnswer: {
                         '@type': 'Answer',
-                        text: `Replace with a concise 40-60 word answer about ${brand}.`,
+                        text: oneLiner,
                     },
                 },
             ],
@@ -177,13 +178,25 @@ export async function generateCommand(target, options = {}) {
         const cwd = process.cwd();
         const { data, body } = await parseSeoMd(cwd);
 
+        // llms.txt and JSON-LD draw on the Canonical Product Facts; flag any still left as template text
+        const placeholders = normalizedTarget === 'robots' ? [] : findPlaceholders(body);
+        if (placeholders.length > 0) {
+            const list = placeholders.join(', ');
+            if (options.strict) {
+                console.error(chalk.red(`✗ SEO.md still has template text in: ${list}. Fill in Canonical Product Facts, then re-run.`));
+                process.exitCode = 1;
+                return;
+            }
+            console.error(chalk.yellow(`⚠ SEO.md still has template text in: ${list}. Those facts were left out of the ${normalizedTarget} output.`));
+        }
+
         let output = '';
         if (normalizedTarget === 'robots') {
             output = buildRobotsTxt(data);
         } else if (normalizedTarget === 'llms') {
             output = buildLlmsTxt(data, body);
         } else if (normalizedTarget === 'schema') {
-            output = buildSchemaJsonLd(data);
+            output = buildSchemaJsonLd(data, body);
         }
 
         if (options.out) {

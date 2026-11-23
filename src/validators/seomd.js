@@ -1,3 +1,4 @@
+import { findPlaceholders } from '../utils/placeholders.js';
 import {
     VALID_SITE_TYPES,
     INTENT_CATEGORIES,
@@ -215,6 +216,13 @@ function validateV2(data, body, errors, warnings) {
     }
 
     // 8. Markdown body check
+    const placeholders = findPlaceholders(body);
+    if (placeholders.length > 0) {
+        warnings.push({
+            path: 'body',
+            message: `Canonical Product Facts still have template text: ${placeholders.join(', ')}. Coding agents and generated llms.txt/JSON-LD need real facts.`,
+        });
+    }
     if (!body || body.trim().length < 20) {
         warnings.push({
             path: 'body',

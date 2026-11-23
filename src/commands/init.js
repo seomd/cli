@@ -10,6 +10,8 @@ import { generateReverseMd } from '../generators/reverse.js';
 import { createSeomdDir } from '../generators/directory.js';
 import { scanRepo } from '../utils/repo-scanner.js';
 import { wireAgentFiles } from '../utils/agent-wiring.js';
+import { parseSeoMd } from '../utils/parser.js';
+import { seedFromExisting, backupSeoMd } from '../utils/migrate.js';
 import { SITE_TYPES, VALID_SITE_TYPES, SITE_TYPE_PROFILES } from '../utils/constants.js';
 
 const { prompt } = enquirer;
@@ -53,23 +55,50 @@ export async function initCommand(options = {}) {
         options.competitors !== undefined;
     const isNonInteractive = Boolean(options.yes || hasConfigFlags);
 
+    // An existing SEO.md is never replaced silently:
+    //   - v1 (legacy) files are upgraded in place, keeping their values
+    //   - v2 / unreadable files need --force (or an interactive yes)
+    // and the previous file is always backed up first.
     const seomdPath = path.join(workingDir, 'SEO.md');
+    let existing = null;
     if (await fs.pathExists(seomdPath)) {
-        if (!isNonInteractive && !options.force) {
-            console.log(chalk.yellow('⚠ SEO.md already exists in this directory.'));
-            const { overwrite } = await prompt({
-                type: 'confirm',
-                name: 'overwrite',
-                message: 'Overwrite existing SEO.md?',
-                initial: false,
-            });
-            if (!overwrite) {
-                console.log(chalk.dim('Aborted.'));
-                process.exitCode = 0;
+        let parsed = null;
+        try {
+            parsed = await parseSeoMd(workingDir);
+        } catch {
+            parsed = null;
+        }
+        const isLegacy = parsed?.format === 'v1';
+
+        if (!options.force) {
+            if (isNonInteractive && !isLegacy) {
+                console.log(chalk.red('✗ SEO.md already exists in this directory. Nothing was changed.'));
+                console.log(chalk.dim('  Re-run with --force to regenerate it (the current file is backed up to SEO.md.bak).'));
+                process.exitCode = 1;
                 return;
             }
+            if (!isNonInteractive) {
+                console.log(chalk.yellow(isLegacy
+                    ? '⚠ Found a v1 SEO.md. init can upgrade it to v2, keeping your brand, keywords, intent queries, and pages.'
+                    : '⚠ SEO.md already exists in this directory.'));
+                const { overwrite } = await prompt({
+                    type: 'confirm',
+                    name: 'overwrite',
+                    message: isLegacy
+                        ? 'Upgrade SEO.md to v2? (current file is backed up to SEO.md.bak)'
+                        : 'Overwrite existing SEO.md? (current file is backed up to SEO.md.bak)',
+                    initial: isLegacy,
+                });
+                if (!overwrite) {
+                    console.log(chalk.dim('Aborted.'));
+                    process.exitCode = 0;
+                    return;
+                }
+            }
         }
+        existing = { parsed, isLegacy };
     }
+    const seed = seedFromExisting(existing?.parsed?.data);
 
     // Inspect repository for framework, existing routes, and crawl files
     const repoInfo = await scanRepo(workingDir);
@@ -83,34 +112,35 @@ export async function initCommand(options = {}) {
         console.log('');
     }
 
-    const inferredBrand = repoInfo.packageName
+    const inferredBrand = seed.answers.brand || (repoInfo.packageName
         ? repoInfo.packageName.replace(/^@[^/]+\//, '').replace(/[-_]+/g, ' ')
-        : 'My Brand';
-    const inferredDomain = repoInfo.homepage
+        : 'My Brand');
+    const inferredDomain = seed.answers.domain || (repoInfo.homepage
         ? normalizeDomain(repoInfo.homepage)
-        : 'example.com';
+        : 'example.com');
 
     let answers;
     if (isNonInteractive) {
-        const siteType = options.type || 'saas';
+        const siteType = options.type || seed.answers.site_type || 'saas';
         const profile = SITE_TYPE_PROFILES[siteType];
         answers = {
             site_type: siteType,
             domain: normalizeDomain(options.domain || inferredDomain),
             brand: (options.brand || inferredBrand).trim(),
-            primary_keyword: (options.primaryKeyword || profile.defaultKeyword).trim(),
+            primary_keyword: (options.primaryKeyword || seed.answers.primary_keyword || profile.defaultKeyword).trim(),
             competitors: options.competitors
                 ? options.competitors
                     .split(',')
                     .map((c) => normalizeDomain(c))
                     .filter(Boolean)
                     .slice(0, 5)
-                : [],
-            provider: options.provider || null,
+                : (seed.answers.competitors || []).map((c) => normalizeDomain(c)).filter(Boolean),
+            provider: options.provider || seed.answers.provider || null,
         };
     } else {
-        const initialTypeIdx = options.type
-            ? Math.max(0, SITE_TYPES.findIndex((t) => t.value === options.type))
+        const typeForPrompt = options.type || seed.answers.site_type;
+        const initialTypeIdx = typeForPrompt
+            ? Math.max(0, SITE_TYPES.findIndex((t) => t.value === typeForPrompt))
             : 0;
 
         answers = await prompt([
@@ -150,6 +180,7 @@ export async function initCommand(options = {}) {
                 type: 'input',
                 name: 'primary_keyword',
                 message: 'Primary keyword:',
+                initial: seed.answers.primary_keyword,
                 hint: 'e.g. project management software',
                 validate(value) {
                     if (!value || !value.trim()) return 'Primary keyword is required';
@@ -160,6 +191,7 @@ export async function initCommand(options = {}) {
                 type: 'input',
                 name: 'competitors',
                 message: 'Top competitors (comma separated, optional):',
+                initial: seed.answers.competitors ? seed.answers.competitors.join(', ') : undefined,
                 hint: 'e.g. asana.com, monday.com, notion.so',
                 result(value) {
                     return String(value || '')
@@ -170,26 +202,37 @@ export async function initCommand(options = {}) {
                 },
             },
         ]);
-        answers.provider = options.provider || null;
+        answers.provider = options.provider || seed.answers.provider || null;
     }
+    answers.carry = seed.carry;
 
     console.log('');
     const spinner = ora('Scaffolding your SEO.md workspace...').start();
 
     try {
-        // 1. Generate v2 SEO.md (YAML frontmatter + Markdown body)
+        // 1. Generate v2 SEO.md (YAML frontmatter + Markdown body), backing up any existing file
         const seomdContent = generateSeoMd(answers, repoInfo);
+        if (existing) {
+            const backupName = await backupSeoMd(workingDir);
+            spinner.succeed(chalk.green(`Previous SEO.md backed up to ${backupName}`));
+        }
         await fs.writeFile(path.join(workingDir, 'SEO.md'), seomdContent, 'utf8');
-        spinner.succeed(chalk.green('SEO.md created (spec v2.0.0)'));
+        spinner.succeed(chalk.green(existing?.isLegacy
+            ? 'SEO.md upgraded from v1 to spec v2.0.0 (values carried over)'
+            : 'SEO.md created (spec v2.0.0)'));
 
-        // 2. Create .seo/ workspace directory
+        // 2. Create .seo/ workspace directory (keeps an existing .seo/README.md)
         await createSeomdDir(workingDir, answers);
-        spinner.succeed(chalk.green('.seo/ workspace created'));
+        spinner.succeed(chalk.green('.seo/ workspace ready'));
 
-        // 3. Initialize .seo/REVERSE.md
-        const reverseContent = generateReverseMd(answers);
-        await fs.writeFile(path.join(workingDir, '.seo', 'REVERSE.md'), reverseContent, 'utf8');
-        spinner.succeed(chalk.green('.seo/REVERSE.md initialized'));
+        // 3. Initialize .seo/REVERSE.md: provider-generated intelligence, never overwritten
+        const reversePath = path.join(workingDir, '.seo', 'REVERSE.md');
+        if (await fs.pathExists(reversePath)) {
+            spinner.succeed(chalk.green('.seo/REVERSE.md kept (existing provider intelligence)'));
+        } else {
+            await fs.writeFile(reversePath, generateReverseMd(answers), 'utf8');
+            spinner.succeed(chalk.green('.seo/REVERSE.md initialized'));
+        }
 
         // 4. Wire AGENTS.md / CLAUDE.md unless opted out via --no-wire-agents
         let agentResult = { updated: [], created: [] };

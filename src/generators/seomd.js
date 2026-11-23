@@ -22,6 +22,7 @@ function getBrandNameFromDomain(domain) {
 export function normalizeDomain(domain) {
     return String(domain || '')
         .trim()
+        .replace(/^<|>$/g, '')
         .replace(/^https?:\/\//i, '')
         .replace(/\/+$/, '');
 }
@@ -50,6 +51,8 @@ export function generateSeoMd(answers, repoInfo = null) {
         ? answers.competitors.map(normalizeDomain).filter(Boolean)
         : [];
     const year = new Date().getFullYear();
+    // Founder-curated values carried over from an existing SEO.md (v1 or v2) on re-init
+    const carry = answers.carry || {};
 
     // Build intent queries tailored to site type
     const comparisonQueries = competitorList.length > 0
@@ -90,6 +93,14 @@ export function generateSeoMd(answers, repoInfo = null) {
             queries: profile.categoryQuery(primaryKeyword, year),
         },
     };
+    if (carry.intent) {
+        for (const [category, kept] of Object.entries(carry.intent)) {
+            intent[category] = {
+                priority: kept.priority || intent[category]?.priority || 'medium',
+                queries: kept.queries,
+            };
+        }
+    }
 
     // Merge discovered live routes with recommended site-type pages
     const recommendedPages = REQUIRED_PAGES[siteType] || REQUIRED_PAGES.saas;
@@ -100,14 +111,32 @@ export function generateSeoMd(answers, repoInfo = null) {
     const seenUrls = new Set();
     const seenIds = new Set();
 
-    // First, add recommended pages (marking as 'live' if discovered in repo)
+    // Pages declared in an existing SEO.md come first, keeping their keywords
+    for (const kept of carry.pages || []) {
+        const urlKey = kept.url.toLowerCase();
+        if (seenUrls.has(urlKey)) continue;
+        let id = kept.id || routeToPageId(kept.url);
+        if (seenIds.has(id)) id = `${id}-${pages.length + 1}`;
+        pages.push({
+            id,
+            url: kept.url,
+            status: discoveredSet.has(urlKey) ? 'live' : kept.status,
+            priority: kept.priority ?? pages.length + 1,
+            keyword: kept.keyword,
+        });
+        seenUrls.add(urlKey);
+        seenIds.add(id);
+    }
+
+    // Then add recommended pages (marking as 'live' if discovered in repo)
     for (const rec of recommendedPages) {
+        if (seenUrls.has(rec.url.toLowerCase())) continue;
         const isLive = discoveredSet.has(rec.url.toLowerCase());
         pages.push({
             id: rec.id,
             url: rec.url,
             status: isLive ? 'live' : 'planned',
-            priority: rec.priority,
+            priority: carry.pages ? pages.length + 1 : rec.priority,
             keyword: rec.url === '/' ? primaryKeyword : null,
         });
         seenUrls.add(rec.url.toLowerCase());
@@ -115,7 +144,7 @@ export function generateSeoMd(answers, repoInfo = null) {
     }
 
     // Then append any additional discovered live routes (capped at 20 total to keep manifest concise)
-    let nextPriority = pages.length + 1;
+    let nextPriority = Math.max(0, ...pages.map((p) => Number(p.priority) || 0)) + 1;
     for (const route of discoveredRoutes) {
         if (pages.length >= 20) break;
         if (seenUrls.has(route.toLowerCase())) continue;
@@ -141,12 +170,12 @@ export function generateSeoMd(answers, repoInfo = null) {
             domain,
             canonical: `https://${domain}`,
             type: siteType,
-            locale: 'en-US',
+            locale: carry.locale || 'en-US',
         },
         keywords: {
             primary: primaryKeyword,
-            secondary: [],
-            negative: profile.negativeKeywords,
+            secondary: carry.secondary || [],
+            negative: carry.negative || profile.negativeKeywords,
         },
         competitors: competitorList.map((c) => ({ domain: c })),
         intent,
@@ -163,14 +192,14 @@ export function generateSeoMd(answers, repoInfo = null) {
         },
         provider: {
             name: answers.provider || null,
-            endpoint: null,
+            endpoint: carry.providerEndpoint || null,
         },
     };
 
     const yamlBlock = YAML.stringify(frontmatter, { lineWidth: 100 }).trimEnd();
 
     const rulesMarkdown = profile.agentRules.map((rule) => `- ${rule}`).join('\n');
-    const negativeMarkdown = profile.negativeKeywords.map((kw) => `\`${kw}\``).join(', ');
+    const negativeMarkdown = frontmatter.keywords.negative.map((kw) => `\`${kw}\``).join(', ');
     const promptLines = [
         `- **Category:** ${intent.category.queries.map((q) => `"${q}"`).join(', ')}`,
         `- **Comparison:** ${intent.comparison.queries.map((q) => `"${q}"`).join(', ')}`,
@@ -183,7 +212,7 @@ export function generateSeoMd(answers, repoInfo = null) {
 > Coding agents: read this file and matching playbooks in \`.seo/pages/\` before creating or editing public pages.
 
 ## Canonical Product Facts
-- **One-liner:** ${brand} — replace with a clear, factual 1-sentence description of what you offer.
+- **One-liner:** ${carry.tagline ? `${brand} — ${carry.tagline}` : `${brand} — replace with a clear, factual 1-sentence description of what you offer.`}
 - **Primary category:** ${primaryKeyword}
 - **Pricing / offer:** Add real pricing or offer facts here so coding agents never invent vague copy.
 - **Proof points:** Add concrete, verifiable metrics, certifications, or customer outcomes.
