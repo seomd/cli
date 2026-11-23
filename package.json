@@ -1,7 +1,7 @@
 {
     "name": "seomd-cli",
-    "version": "2.0.1",
-    "description": "The official CLI for the SEO.md open standard \u2014 AEO infrastructure for technical founders and coding agents",
+    "version": "2.0.2",
+    "description": "The official CLI for the SEO.md open standard — AEO infrastructure for technical founders and coding agents",
     "homepage": "https://seomd.dev",
     "repository": {
         "type": "git",
