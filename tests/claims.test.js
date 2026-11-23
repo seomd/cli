@@ -69,6 +69,11 @@ describe('placeholders', () => {
         expect(auditPlaceholders(page('<p>Lorem ipsum dolor sit amet</p>'), '/')).toHaveLength(1);
     });
 
+    test('a quoted placeholder in prose is ignored', () => {
+        expect(auditPlaceholders(page('<p>Claude Code wrote "TBD" in the price cells.</p>'), '/')).toEqual([]);
+        expect(auditPlaceholders(page('<p>Copy such as “TODO” fails the check.</p>'), '/')).toEqual([]);
+    });
+
     test('scripts and normal copy are ignored', () => {
         const html = page('<p>Coming soon: usage alerts.</p><script>// TODO remove</script>');
         expect(auditPlaceholders(html, '/')).toEqual([]);

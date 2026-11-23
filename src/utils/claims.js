@@ -203,10 +203,14 @@ export function auditClaims(html, urlLabel, claims) {
  * Flags unfinished copy (TBD, TODO, FIXME, lorem ipsum, [insert ...]) on a rendered page.
  * Runs on every page, with or without `claims`.
  */
+const QUOTES = `"'“”‘’\``;
+
 export function auditPlaceholders(html, urlLabel) {
     for (const block of visibleBlocks(html)) {
         const m = block.match(PLACEHOLDER_RE);
-        if (m) {
+        // A quoted placeholder ("TBD") is prose talking about one, not unfinished copy
+        const quoted = m && QUOTES.includes(block[m.index - 1] || '') && QUOTES.includes(block[m.index + m[0].length] || '');
+        if (m && !quoted) {
             return [{
                 target: urlLabel,
                 rule: 'placeholder',
