@@ -10,6 +10,8 @@ export default [
                 console: 'readonly',
                 process: 'readonly',
                 Buffer: 'readonly',
+                fetch: 'readonly',
+                URL: 'readonly',
                 __dirname: 'readonly',
                 __filename: 'readonly',
                 global: 'readonly',
@@ -26,6 +28,21 @@ export default [
             'n/no-unpublished-import': 'off',
             'no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
             'no-console': 'off',
+        },
+    },
+    {
+        files: ['tests/**/*.js'],
+        languageOptions: {
+            globals: {
+                describe: 'readonly',
+                test: 'readonly',
+                it: 'readonly',
+                expect: 'readonly',
+                beforeEach: 'readonly',
+                afterEach: 'readonly',
+                beforeAll: 'readonly',
+                afterAll: 'readonly',
+            },
         },
     },
     {

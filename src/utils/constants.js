@@ -1,3 +1,5 @@
+export const SPEC_VERSION = '2.0.0';
+
 export const SITE_TYPES = [
     { name: 'SaaS / Software', value: 'saas' },
     { name: 'Ecommerce', value: 'ecommerce' },
@@ -6,6 +8,8 @@ export const SITE_TYPES = [
     { name: 'Marketplace', value: 'marketplace' },
 ];
 
+export const VALID_SITE_TYPES = SITE_TYPES.map((t) => t.value);
+
 export const INTENT_CATEGORIES = [
     'informational',
     'comparison',
@@ -13,6 +17,10 @@ export const INTENT_CATEGORIES = [
     'reputational',
     'category',
 ];
+
+export const VALID_PRIORITIES = ['low', 'medium', 'high', 'critical'];
+
+export const VALID_PAGE_STATUSES = ['live', 'draft', 'planned'];
 
 export const INTENT_PRIORITIES = {
     saas: {
@@ -61,9 +69,8 @@ export const REQUIRED_PAGES = {
         { id: 'alternatives', url: '/alternatives/[competitor]', priority: 5 },
         { id: 'use-cases', url: '/for/[segment]', priority: 6 },
         { id: 'integrations', url: '/integrations', priority: 7 },
-        { id: 'changelog', url: '/changelog', priority: 8 },
-        { id: 'docs', url: '/docs', priority: 9 },
-        { id: 'blog', url: '/blog', priority: 10 },
+        { id: 'docs', url: '/docs', priority: 8 },
+        { id: 'blog', url: '/blog', priority: 9 },
     ],
     ecommerce: [
         { id: 'homepage', url: '/', priority: 1 },
@@ -71,8 +78,8 @@ export const REQUIRED_PAGES = {
         { id: 'product', url: '/products/[slug]', priority: 3 },
         { id: 'collection', url: '/collections/[slug]', priority: 4 },
         { id: 'reviews', url: '/reviews', priority: 5 },
-        { id: 'cart', url: '/cart', priority: 6 },
-        { id: 'checkout', url: '/checkout', priority: 7 },
+        { id: 'shipping-returns', url: '/shipping-and-returns', priority: 6 },
+        { id: 'faq', url: '/faq', priority: 7 },
     ],
     local: [
         { id: 'homepage', url: '/', priority: 1 },
@@ -97,10 +104,9 @@ export const REQUIRED_PAGES = {
         { id: 'listing', url: '/listings/[slug]', priority: 2 },
         { id: 'category', url: '/[category]', priority: 3 },
         { id: 'seller-profile', url: '/sellers/[slug]', priority: 4 },
-        { id: 'search-results', url: '/search', priority: 5 },
-        { id: 'how-it-works', url: '/how-it-works', priority: 6 },
-        { id: 'pricing', url: '/pricing', priority: 7 },
-        { id: 'trust-safety', url: '/trust', priority: 8 },
+        { id: 'how-it-works', url: '/how-it-works', priority: 5 },
+        { id: 'pricing', url: '/pricing', priority: 6 },
+        { id: 'trust-safety', url: '/trust', priority: 7 },
     ],
 };
 
@@ -112,12 +118,104 @@ export const SCHEMA_TYPES = {
     marketplace: ['WebSite', 'Organization', 'FAQPage', 'Product'],
 };
 
+export const SITE_TYPE_PROFILES = {
+    saas: {
+        defaultKeyword: 'workflow automation software',
+        negativeKeywords: ['free download', 'cracked', 'open source clone'],
+        disallow: ['/admin', '/api/*', '/app/*', '/dashboard/*'],
+        categoryQuery: (kw, year) => [`best ${kw}`, `top ${kw} tools ${year}`],
+        comparisonSuffix: (kw) => `best ${kw} for startups`,
+        transactionalQueries: (brandLower) => [
+            `is ${brandLower} worth it`,
+            `${brandLower} pricing`,
+            `${brandLower} demo`,
+        ],
+        agentRules: [
+            'Open every key page with a 40-60 word direct answer to the page\'s primary query.',
+            'Include a structured FAQ section (minimum 4 questions) with `FAQPage` JSON-LD.',
+            'Emit `Organization` and `SoftwareApplication` JSON-LD on core product pages.',
+            'Comparison pages (`/vs/*`, `/alternatives/*`) must include a factual feature table — never fabricate competitor pricing.',
+        ],
+    },
+    ecommerce: {
+        defaultKeyword: 'specialty coffee beans',
+        negativeKeywords: ['wholesale bulk', 'cheap knockoff', 'free sample'],
+        disallow: ['/admin', '/api/*', '/cart', '/checkout', '/account/*'],
+        categoryQuery: (kw, year) => [`best ${kw}`, `top ${kw} brands ${year}`],
+        comparisonSuffix: (kw) => `best ${kw} to buy online`,
+        transactionalQueries: (brandLower) => [
+            `buy ${brandLower}`,
+            `${brandLower} shipping and returns`,
+            `${brandLower} discount`,
+        ],
+        agentRules: [
+            'Include clear pricing, availability, materials/specs, and shipping details in plain text on every product page.',
+            'Emit `Product` (with `Offer` and `AggregateRating` where real reviews exist) and `BreadcrumbList` JSON-LD.',
+            'Never index `/cart`, `/checkout`, or account pages; keep them disallowed in `robots.txt`.',
+            'Add concise buying-guide FAQs on category and product pages answering sizing, care, and compatibility questions.',
+        ],
+    },
+    local: {
+        defaultKeyword: 'emergency plumbing service',
+        negativeKeywords: ['diy', 'jobs', 'careers', 'salary'],
+        disallow: ['/admin', '/api/*', '/portal/*'],
+        categoryQuery: (kw, year) => [`best ${kw} near me`, `top rated ${kw} ${year}`],
+        comparisonSuffix: (kw) => `most reliable ${kw} in my area`,
+        transactionalQueries: (brandLower) => [
+            `${brandLower} phone number`,
+            `${brandLower} hours and pricing`,
+            `book ${brandLower}`,
+        ],
+        agentRules: [
+            'Keep Name, Address, Phone (NAP), service areas, and business hours consistent across all pages.',
+            'Emit `LocalBusiness` (with `GeoCoordinates` and opening hours) and `FAQPage` JSON-LD.',
+            'Give each service and city/location page unique local proof points (never duplicate city-swap boilerplate).',
+            'Surface verified customer reviews, licenses, and guarantees near the top of service pages.',
+        ],
+    },
+    blog: {
+        defaultKeyword: 'developer productivity',
+        negativeKeywords: ['paid ad', 'sponsored spam'],
+        disallow: ['/admin', '/api/*', '/drafts/*'],
+        categoryQuery: (kw, year) => [`best ${kw} guides`, `top ${kw} resources ${year}`],
+        comparisonSuffix: (kw) => `best ${kw} newsletters and blogs`,
+        transactionalQueries: (brandLower) => [
+            `${brandLower} newsletter`,
+            `subscribe to ${brandLower}`,
+        ],
+        agentRules: [
+            'Lead every article with a 2-3 sentence direct takeaway (answer-first format) before deep context.',
+            'Include explicit author bio, publish/updated dates, and primary-source citations.',
+            'Emit `Article`, `Person` (author), and `BreadcrumbList` JSON-LD on every post.',
+            'Use clear H1 -> H2 -> H3 hierarchy and concise summaries/tables that AI engines can quote accurately.',
+        ],
+    },
+    marketplace: {
+        defaultKeyword: 'freelance design marketplace',
+        negativeKeywords: ['scam', 'free cracked'],
+        disallow: ['/admin', '/api/*', '/checkout', '/messages/*', '/account/*'],
+        categoryQuery: (kw, year) => [`best ${kw}`, `top ${kw} platforms ${year}`],
+        comparisonSuffix: (kw) => `best ${kw} for buyers and sellers`,
+        transactionalQueries: (brandLower) => [
+            `how does ${brandLower} work`,
+            `${brandLower} fees`,
+            `is ${brandLower} safe`,
+        ],
+        agentRules: [
+            'Clearly explain both sides of the marketplace (buyer protection, seller fees, verification) on core pages.',
+            'Emit `WebSite` (with `SearchAction`), `Organization`, and `Product`/`Offer` JSON-LD on listing pages.',
+            'Keep dynamic search/filter parameter URLs canonicalized to clean category pages to avoid crawl bloat.',
+            'Include trust, safety, and fee-structure FAQs with `FAQPage` JSON-LD.',
+        ],
+    },
+};
+
 export const PERFORMANCE_THRESHOLDS = {
     lcp: '2.5s',
     cls: '0.1',
-    fid: '100ms',
+    inp: '200ms',
     page_size: '500kb',
-    time_to_first_byte: '800ms',
+    ttfb: '800ms',
 };
 
 export const AI_BOTS = [

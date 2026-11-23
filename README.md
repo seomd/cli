@@ -1,34 +1,25 @@
 # SEO.md CLI
 
-<p align="left" style="padding: 100px 0;">
+<p align="left" style="padding: 40px 0;">
   <img alt="SEO.md CLI logo" src="./assets/logo.svg" />
 </p>
 
-The official CLI for the [SEO.md](https://seomd.dev) open standard — AEO (AI Engine Optimization) infrastructure for technical founders.
+The official CLI for the [SEO.md](https://seomd.dev) open standard (spec **v2.0.0**) — the `AGENTS.md` / `CLAUDE.md` / `DESIGN.md` equivalent for search and AI Engine Optimization (AEO).
 
-Use it to scaffold, validate, analyze, and sync `SEO.md` files directly from your repo.
+Use it to scaffold a Markdown + YAML frontmatter `SEO.md`, wire coding agents automatically via `AGENTS.md` / `CLAUDE.md`, audit local pages offline, generate `robots.txt` / `llms.txt` / JSON-LD, and optionally connect any compatible AI citation intelligence provider.
 
-## Table of Contents
+---
 
-- [Why SEO.md](#why-seomd)
-- [Install](#install)
-- [Quick Start](#quick-start)
-- [Configuration](#configuration)
-- [Commands](#commands)
-- [Local Development](#local-development)
-- [Testing](#testing)
-- [Release Notes (Contributor Tagging)](#release-notes-contributor-tagging)
-- [Security](#security)
-- [Specification Reference](#specification-reference)
-- [License](#license)
+## Why SEO.md?
 
-## Why SEO.md
+Coding agents are great at shipping pages fast, but terrible at SEO/AEO without ground truth. `SEO.md` gives both humans and coding agents one repo-native source of truth:
 
-SEO.md is a structured, version-controlled specification for describing your site, intent queries, and pages so AI engines can cite you more often.
+- **Markdown-first (`---` frontmatter + prose):** Agents read Canonical Product Facts, Page & AEO Rules, Target Buyer Prompts, and Do Not Claim guardrails directly — while the CLI parses the structured frontmatter safely.
+- **Zero-friction agent discovery:** `seomd init` automatically wires a concise pointer block into `AGENTS.md` / `CLAUDE.md` so coding agents pick up `SEO.md` on day one.
+- **Useful offline with zero API keys:** `validate`, `check`, `generate`, and `doctor` all work locally.
+- **Vendor-agnostic provider protocol:** Connect **Foxcite** (native reference implementation) or any provider/bridge implementing [`PROVIDER_SPEC.md`](./PROVIDER_SPEC.md) (SEMrush, Ahrefs, Profound, Peec AI, or custom).
 
-- Declare what matters (site, identity, keywords, intent, pages)
-- Run audits via your connected platform
-- Write back `_analysis` blocks and per-page playbooks into your repo
+---
 
 ## Install
 
@@ -36,216 +27,89 @@ SEO.md is a structured, version-controlled specification for describing your sit
 npm install -g seomd-cli
 ```
 
-Or run without installing (zero-install):
+Or run zero-install:
 
 ```bash
 npx seomd-cli init
 ```
 
-Verify:
-
-```bash
-seomd --help
-```
+---
 
 ## Quick Start
 
-### 1) Initialize
-
-Run in the root of your project:
+### 1) Initialize (Repo-Aware + Agent Wiring)
 
 ```bash
-seomd init
+npx seomd-cli init
 ```
 
-Or non-interactively with flags:
+`init` inspects your repo (Next.js, Astro, SvelteKit, etc.) to discover live routes, generates `SEO.md` (v2.0.0) and `.seo/`, and wires `AGENTS.md` / `CLAUDE.md` so coding agents read `SEO.md` automatically.
+
+Non-interactive mode:
 
 ```bash
-seomd init -y --type local
-# or
-seomd init --brand "Acme" --domain acme.com --primary-keyword "local seo"
+npx seomd-cli init -y --type saas --brand "Acme" --domain acme.com --primary-keyword "billing automation"
 ```
 
-### 2) Validate
+### 2) Validate & Audit Locally (Zero API Key)
 
 ```bash
-seomd validate
+npx seomd-cli validate --strict
+npx seomd-cli check ./out                 # audit static HTML output
+npx seomd-cli check http://localhost:3000 # audit running dev server
+npx seomd-cli doctor                      # check SEO.md, agent wiring, crawl files, provider
 ```
 
-### 3) Run an Audit (Analyze) and Sync
+### 3) Generate Crawl & AI Discovery Artifacts
 
 ```bash
-seomd analyze
-seomd sync
+npx seomd-cli generate robots --out public/robots.txt
+npx seomd-cli generate llms --out public/llms.txt
+npx seomd-cli generate schema
 ```
 
-### 4) View Status
+### 4) Connect a Live Intelligence Provider (Optional)
+
+Live citation scans (`analyze` / `sync`) write results into `.seo/STATUS.yml`, `.seo/REVERSE.md`, and `.seo/pages/*.md` (merge-safe on partial `--page` runs):
 
 ```bash
-seomd status
-seomd status --json
+# Example using Foxcite (native reference implementation)
+export SEOMD_PROVIDER=foxcite
+export SEOMD_API_KEY="your_api_key_here"
+
+npx seomd-cli analyze
+npx seomd-cli analyze --page /pricing --intent transactional
+npx seomd-cli sync --dry-run
+npx seomd-cli status --json
 ```
 
-## Configuration
+See [`PROVIDER_SPEC.md`](./PROVIDER_SPEC.md) to connect custom endpoints or third-party platforms (`semrush`, `ahrefs`, `profound`, `peec`, `custom`).
 
-Copy `.env.example` from your platform provider docs, or create one with the vars you need:
-
-Required for live audits:
-
-```bash
-SEOMD_API_URL=
-SEOMD_API_KEY=your_key_here
-```
-
-Optional:
-
-```bash
-SEOMD_PAYMENT_TOKEN= # x402 pay-per-scan token
-SEOMD_DOMAIN= # override domain header
-```
-
-> If you don't have a platform key yet, `seomd init` still works without `.env`.
+---
 
 ## Commands
 
-### `seomd init`
+| Command | Offline? | Description |
+|---|---|---|
+| `seomd init` | Yes | Repo-aware scaffold for `SEO.md` (v2.0.0), `.seo/`, and `AGENTS.md` / `CLAUDE.md` wiring |
+| `seomd validate` | Yes | Validate `SEO.md` (supports v2 frontmatter + legacy v1 YAML); `--strict`, `--json` |
+| `seomd check [target]` | Yes | Audit local HTML/build dir or URL against `SEO.md` (title, meta, H1, canonical, JSON-LD, AI bots, negative terms) |
+| `seomd generate <target>` | Yes | Generate `robots`, `llms`, or `schema` from `SEO.md` |
+| `seomd doctor` | Yes | Inspect `SEO.md`, agent wiring, crawl files, and provider readiness |
+| `seomd analyze` | Provider | Run live AI citation audit (`--page`, `--intent`, `--engines`) and merge into `.seo/` |
+| `seomd sync` | Provider | Pull cached provider intelligence (`--dry-run` shows deltas) |
+| `seomd status` | Yes | Display citation rates and gap scores from `.seo/STATUS.yml` (`--json`) |
 
-Scaffolds `SEO.md`, `SEO.REVERSE.md`, and the `.seo/` intelligence directory.
+---
 
-**Usage:**
-
-```bash
-seomd init                              # interactive 5-question flow
-seomd init -y --type local              # skip prompts, use defaults
-seomd init --brand "Acme" --domain acme.com  # non-interactive with partial flags
-seomd init --type saas --brand "MyApp" --domain myapp.com --primary-keyword "billing automation" --output ./new-project
-```
-
-**Options:**
-
-| Flag | Description |
-|------|-------------|
-| `-y, --yes` | skip prompts, use defaults |
-| `--type <type>` | site type: saas, ecommerce, local, blog, marketplace |
-| `--brand <name>` | brand name |
-| `--domain <domain>` | primary domain |
-| `--primary-keyword <keyword>` | primary keyword |
-| `--competitors <list>` | comma-separated competitor list |
-| `--output <dir>` | scaffold into a new (empty) directory instead of cwd |
-
-**Behavior:**
-
-- Interactive flow by default (5 questions)
-- Non-interactive when `-y` is set **OR** any config flag (`--brand`, `--domain`, `--primary-keyword`, `--competitors`) is provided
-- `--type` alone pre-selects site type in the interactive flow
-- `--output` writes all files to the target directory (must be empty or non-existent)
-
-### `seomd validate`
-
-Validates your `SEO.md` against the spec requirements.
-
-### `seomd status`
-
-Shows current citation rates and gap scores from `_analysis`.
-
-- `--json` outputs machine-readable JSON for scripts/CI
-
-### `seomd analyze`
-
-Runs an AI search audit via your connected platform and writes results back into:
-
-- `SEO.md` (`_analysis` blocks)
-- `SEO.REVERSE.md` (generated reverse view)
-- `.seo/pages/*.md` (per-page playbooks when available)
-
-### `seomd sync`
-
-Pulls cached/latest platform intelligence and writes it back to the same files as `analyze`.
-
-- `--dry-run` prints a preview and does not modify files
-
-## Built-in Templates
-
-`seomd-cli` ships with type-specific templates under `src/templates/`. `seomd init --type <type>` uses the matching template automatically.
-
-| Type | Template dir | Best for |
-|------|-------------|----------|
-| `saas` | `src/templates/saas/` | Software products, B2B tools, web apps |
-| `blog` | `src/templates/blog/` | Content sites, newsletters, personal brands |
-| `ecommerce` | `src/templates/ecommerce/` | Online stores, DTC brands, product catalogs |
-| `local` | `src/templates/local/` | Service-area businesses, locations pages |
-| `marketplace` | `src/templates/marketplace/` | Two-sided platforms, directories |
-
-Each template contains:
-
-- `SEO.md` — pre-filled with type-specific intent queries, page structures, and negative keywords
-- `SEO.REVERSE.md` — reverse-engineer output scaffold with placeholders for competitor analysis
-
-Want to customize a template? Copy the relevant folder, edit the placeholders (`{{brand}}`, `{{domain}}`, etc.), and use `--type` with your custom scaffold.
-
-## Local Development
-
-Prefer the local entrypoint while developing:
+## Development & Testing
 
 ```bash
-node ./bin/seomd.js --help
-node ./bin/seomd.js init
-node ./bin/seomd.js validate
-node ./bin/seomd.js status --json
-```
-
-## Testing
-
-```bash
+npm run lint
 npm test
+node ./bin/seomd.js --help
 ```
-
-## Release Notes (Contributor Tagging)
-
-To generate a contributor section for a release (commit-based attribution), maintain mappings in `.github/contributors.yml` and generate markdown from a tag range:
-
-```bash
-npm run release:contributors -- --from v1.0.2 --to v1.0.3
-```
-
-To write output to a file:
-
-```bash
-npm run release:contributors -- --from v1.0.2 --to v1.0.3 --out notes/v1.0.3-contributors.md
-```
-
-To generate a full release note (changes + contributors) for a tag:
-
-```bash
-npm run release:notes -- --tag v1.0.3
-```
-
-Automation: the repository includes a GitHub Actions workflow that runs on tag push (`v*`) and creates/updates the GitHub Release using `scripts/release-notes.js`.
-
-## Platform Connections & API Keys
-
-To enable live intelligence writebacks (using automated platforms like [Foxcite](https://foxcite.com)):
-
-1. Obtain a developer API key from your platform provider.
-2. Export the key as an environment variable:
-
-   ```bash
-   export SEOMD_API_KEY="your_api_key_here"
-   ```
-
-3. Run `seomd sync` or `seomd analyze`.
-
-_Note: Never commit your API keys or `.env` files containing keys to version control._
-
-## Security
-
-- Never commit `.env` files or API keys
-- Use `.env.example` as the template for required variables
-
-## Specification Reference
-
-Read the complete specification and guidelines at [seomd.dev/spec](https://seomd.dev/spec).
 
 ## License
 
-MIT License. Developed and maintained by the community.
+MIT License.

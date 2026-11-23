@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import { execSync } from 'child_process';
+import { execFileSync } from 'child_process';
 import YAML from 'yaml';
 
 function parseArgs(argv) {
@@ -23,11 +23,11 @@ function parseArgs(argv) {
 }
 
 function git(repoRoot, args) {
-    return execSync(`git ${args}`, { cwd: repoRoot, stdio: ['ignore', 'pipe', 'pipe'] }).toString('utf8');
+    return execFileSync('git', args, { cwd: repoRoot, stdio: ['ignore', 'pipe', 'pipe'] }).toString('utf8');
 }
 
 function getRepoRoot() {
-    return execSync('git rev-parse --show-toplevel', { stdio: ['ignore', 'pipe', 'pipe'] }).toString('utf8').trim();
+    return execFileSync('git', ['rev-parse', '--show-toplevel'], { stdio: ['ignore', 'pipe', 'pipe'] }).toString('utf8').trim();
 }
 
 function readContributorsMap(repoRoot) {
@@ -87,7 +87,7 @@ function extractCoAuthors(commitBody) {
 function getCommitBodies(repoRoot, range) {
     const sepCommit = '\u001e';
     const sepField = '\u001f';
-    const out = git(repoRoot, `log ${range} --no-color --format=%H${sepField}%an${sepField}%ae${sepField}%s${sepField}%B${sepCommit}`);
+    const out = git(repoRoot, ['log', range, '--no-color', `--format=%H${sepField}%an${sepField}%ae${sepField}%s${sepField}%B${sepCommit}`]);
     const rawCommits = out.split(sepCommit).map(s => s.trim()).filter(Boolean);
     return rawCommits.map(entry => {
         const parts = entry.split(sepField);
@@ -99,7 +99,7 @@ function getCommitBodies(repoRoot, range) {
 
 function determinePrevTag(repoRoot, tag) {
     try {
-        return git(repoRoot, `describe --tags --abbrev=0 ${tag}^`).trim();
+        return git(repoRoot, ['describe', '--tags', '--abbrev=0', `${tag}^`]).trim();
     } catch {
         return null;
     }

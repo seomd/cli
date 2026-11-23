@@ -1,35 +1,44 @@
 # SEO.md CLI Skill
 
-**What this does:** Scaffolds `SEO.md`, `SEO.REVERSE.md`, and `.seo/` intelligence directory into any project via the official CLI.
+**What this does:** Scaffolds, validates, and audits `SEO.md` (spec v2.0.0) — the `AGENTS.md` / `CLAUDE.md` / `DESIGN.md` equivalent for search and AI-citation strategy — and wires coding-agent instructions directly into `AGENTS.md` / `CLAUDE.md`.
 
-## Usage
+## Workflow for Coding Agents
 
-Tell your agent: "Run `npx seomd-cli init` in this repo."
+1. **Initialize in a repo** (auto-detects routes and wires `AGENTS.md` / `CLAUDE.md`):
+   ```bash
+   npx seomd-cli init
+   # or non-interactively:
+   npx seomd-cli init -y --type saas --brand "Acme" --domain acme.com --primary-keyword "billing automation"
+   ```
+2. **Read `SEO.md` before creating or editing public pages** — follow the Canonical Product Facts, Page & AEO Rules, Target Buyer Prompts, and Do Not Claim sections.
+3. **Check page playbooks** in `.seo/pages/<page-id>.md` and `.seo/REVERSE.md` (when populated by a provider) to fix citation gaps.
+4. **Verify locally (zero API key required):**
+   ```bash
+   npx seomd-cli validate --strict
+   npx seomd-cli check ./out                  # or http://localhost:3000
+   npx seomd-cli generate robots --out public/robots.txt
+   npx seomd-cli generate llms --out public/llms.txt
+   npx seomd-cli doctor
+   ```
+5. **Run live AI citation scans (optional, any compatible provider):**
+   ```bash
+   npx seomd-cli analyze                      # full audit -> updates .seo/
+   npx seomd-cli analyze --page /pricing      # single page (merge-safe)
+   npx seomd-cli sync --dry-run               # preview cached deltas
+   npx seomd-cli status --json                # machine-readable metrics
+   ```
 
-## Flags
+## `init` Flags
 
 | Flag | Description |
 |------|-------------|
-| `-y, --yes` | skip prompts, use defaults |
-| `--type <type>` | site type: saas, ecommerce, local, blog, marketplace |
+| `-y, --yes` | skip prompts, use inferred defaults |
+| `-f, --force` | overwrite existing `SEO.md` without prompting |
+| `--type <type>` | `saas`, `ecommerce`, `local`, `blog`, `marketplace` |
 | `--brand <name>` | brand name |
 | `--domain <domain>` | primary domain |
 | `--primary-keyword <keyword>` | primary keyword |
 | `--competitors <list>` | comma-separated competitor domains |
-| `--output <dir>` | scaffold into new (empty) directory |
-
-## Behavior
-
-- Interactive 5-question flow by default
-- **Non-interactive** when `-y` **OR** any config flag (`--brand`, `--domain`, `--primary-keyword`, `--competitors`) is provided
-- `--type` alone pre-selects site type in interactive flow
-- `--output` writes to target directory (must be empty or non-existent)
-
-## Next Steps
-
-After init:
-
-```bash
-npx seomd analyze   # run citation analysis (needs SEOMD_API_KEY)
-npx seomd status    # view gap scores
-```
+| `--provider <name>` | optional provider (`foxcite`, `semrush`, `ahrefs`, `profound`, `peec`, `custom`) |
+| `--no-wire-agents` | skip wiring `AGENTS.md` / `CLAUDE.md` |
+| `--output <dir>` | scaffold into a new (empty) directory |

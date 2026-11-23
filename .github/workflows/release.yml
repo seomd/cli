@@ -28,8 +28,9 @@ jobs:
           fetch-tags: true
       - uses: actions/setup-node@v4
         with:
-          node-version: "18"
-      - run: npm ci --legacy-peer-deps
+          node-version: "20"
+      - run: npm ci
+      - run: npm run lint && npm test
       - run: |
           node scripts/release-notes.js --tag "$TAG" --out release-notes.md
           if gh release view "$TAG" >/dev/null 2>&1; then
@@ -38,5 +39,4 @@ jobs:
             gh release create "$TAG" --title "$TAG" --notes-file release-notes.md
           fi
         env:
-          TAG: ${{ github.ref_name }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
