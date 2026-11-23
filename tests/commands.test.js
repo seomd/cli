@@ -323,6 +323,25 @@ describe('init (v2)', () => {
         expect(process.exitCode).toBe(0);
     });
 
+    test('scanRepo detects crawl files served by Next.js route handlers and Astro endpoints', async () => {
+        const { scanRepo } = await import('../src/utils/repo-scanner.js');
+
+        await fs.ensureDir(path.join(cwd, 'src', 'app', 'llms.txt'));
+        await fs.writeFile(path.join(cwd, 'src', 'app', 'llms.txt', 'route.ts'), 'export async function GET() {}', 'utf8');
+        await fs.writeFile(path.join(cwd, 'src', 'app', 'robots.ts'), 'export default function robots() {}', 'utf8');
+        let info = await scanRepo(cwd);
+        expect(info.hasLlmsTxt).toBe(true);
+        expect(info.hasRobotsTxt).toBe(true);
+        expect(info.hasSitemap).toBe(false);
+
+        await fs.remove(path.join(cwd, 'src', 'app'));
+        await fs.ensureDir(path.join(cwd, 'src', 'pages'));
+        await fs.writeFile(path.join(cwd, 'src', 'pages', 'sitemap.xml.ts'), 'export const GET = () => {}', 'utf8');
+        info = await scanRepo(cwd);
+        expect(info.hasSitemap).toBe(true);
+        expect(info.hasLlmsTxt).toBe(false);
+    });
+
     test('rejects invalid --type', async () => {
         await initCommand({ yes: true, type: 'invalid-type' });
         expect(process.exitCode).toBe(1);

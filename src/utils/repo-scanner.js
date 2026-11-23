@@ -78,15 +78,36 @@ export async function scanRepo(cwd) {
         }
     }
 
-    // Also check Next.js App Router dynamic robots/sitemap conventions
+    // Also check files generated at request/build time:
+    //   - Next.js App Router metadata files: app/robots.ts, app/sitemap.ts
+    //   - Next.js route handlers: app/llms.txt/route.ts, app/robots.txt/route.ts, app/sitemap.xml/route.ts
+    //   - Astro endpoints: src/pages/llms.txt.ts (etc.)
+    const crawlFiles = [
+        ['hasRobotsTxt', 'robots', 'robots.txt'],
+        ['hasSitemap', 'sitemap', 'sitemap.xml'],
+        ['hasLlmsTxt', null, 'llms.txt'],
+    ];
+    const exts = ['ts', 'js', 'tsx', 'jsx', 'mjs'];
     for (const appBase of [path.join(cwd, 'app'), path.join(cwd, 'src', 'app')]) {
-        if (await fs.pathExists(appBase)) {
-            for (const ext of ['ts', 'js', 'tsx', 'jsx']) {
-                if (!result.hasRobotsTxt && (await fs.pathExists(path.join(appBase, `robots.${ext}`)))) {
-                    result.hasRobotsTxt = true;
+        if (!(await fs.pathExists(appBase))) continue;
+        for (const [flag, metadataName, fileName] of crawlFiles) {
+            for (const ext of exts) {
+                if (result[flag]) break;
+                if (
+                    (metadataName && (await fs.pathExists(path.join(appBase, `${metadataName}.${ext}`)))) ||
+                    (await fs.pathExists(path.join(appBase, fileName, `route.${ext}`)))
+                ) {
+                    result[flag] = true;
                 }
-                if (!result.hasSitemap && (await fs.pathExists(path.join(appBase, `sitemap.${ext}`)))) {
-                    result.hasSitemap = true;
+            }
+        }
+    }
+    const astroPages = path.join(cwd, 'src', 'pages');
+    if (await fs.pathExists(astroPages)) {
+        for (const [flag, , fileName] of crawlFiles) {
+            for (const ext of exts) {
+                if (!result[flag] && (await fs.pathExists(path.join(astroPages, `${fileName}.${ext}`)))) {
+                    result[flag] = true;
                 }
             }
         }
