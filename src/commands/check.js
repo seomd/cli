@@ -149,7 +149,11 @@ export async function checkCommand(target, options = {}) {
         const isUrl = typeof target === 'string' && /^https?:\/\//i.test(target);
 
         if (isUrl) {
-            const baseUrl = target.replace(/\/$/, '');
+            // Crawl files always live at the site origin. A URL with a path audits just that page;
+            // a bare origin audits every live page declared in SEO.md.
+            const parsedTarget = new URL(target);
+            const baseUrl = parsedTarget.origin;
+            const targetPath = parsedTarget.pathname.replace(/\/+$/, '');
 
             // Check robots.txt
             try {
@@ -180,7 +184,9 @@ export async function checkCommand(target, options = {}) {
 
             // Audit concrete pages from SEO.md (or homepage fallback)
             const pages = getPages(data).filter((p) => p.url && !p.url.includes('[') && p.status !== 'planned');
-            const toFetch = pages.length > 0 ? pages : [{ id: 'homepage', url: '/' }];
+            const toFetch = targetPath
+                ? [{ id: 'target', url: `${targetPath}${parsedTarget.search}` }]
+                : pages.length > 0 ? pages : [{ id: 'homepage', url: '/' }];
 
             for (const page of toFetch) {
                 const pageUrl = `${baseUrl}${page.url === '/' ? '' : page.url}`;

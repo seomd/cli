@@ -514,6 +514,31 @@ describe('generate & check & doctor (local zero-API-key loop)', () => {
         logSpy.mockRestore();
     });
 
+    test('check <page URL> audits only that page and reads crawl files from the origin', async () => {
+        await writeV2SeoMd(cwd);
+        const logSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
+        const html = '<html><head><title>Post title here</title>'
+            + '<meta name="description" content="A description that is comfortably between fifty and one hundred sixty characters long.">'
+            + '<script type="application/ld+json">{"@type":"BlogPosting"}</script></head><body><h1>Post</h1></body></html>';
+        const fetchSpy = jest.spyOn(globalThis, 'fetch').mockImplementation(async (url) => ({
+            ok: true,
+            status: 200,
+            text: async () => (String(url).endsWith('.txt') ? 'User-agent: *\nAllow: /\n' : html),
+        }));
+
+        await checkCommand('https://example.com/blog/some-post/?ref=x');
+
+        const urls = fetchSpy.mock.calls.map((c) => String(c[0]));
+        expect(urls).toContain('https://example.com/robots.txt');
+        expect(urls).toContain('https://example.com/llms.txt');
+        expect(urls).toContain('https://example.com/blog/some-post?ref=x');
+        expect(urls.some((u) => u.includes('/blog/some-post/robots.txt'))).toBe(false);
+        expect(urls.some((u) => u.endsWith('/pricing'))).toBe(false);
+
+        fetchSpy.mockRestore();
+        logSpy.mockRestore();
+    });
+
     test('check audits local HTML directory and flags blocked AI bots + missing H1', async () => {
         await writeV2SeoMd(cwd);
         await fs.ensureDir(path.join(cwd, 'dist'));
