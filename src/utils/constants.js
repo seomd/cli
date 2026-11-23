@@ -218,28 +218,36 @@ export const PERFORMANCE_THRESHOLDS = {
     ttfb: '800ms',
 };
 
+// purpose, from each vendor's crawler docs (checked 2026-11-23):
+//   training: collects content for model training (blocking it doesn't remove you from AI search)
+//   search:   builds the index AI or web search answers cite from (blocking it removes you)
+//   user:     fetches a page when a user asks; vendors say robots.txt may not apply
+//   other:    purpose not clearly documented
+// Google-Extended and Applebot-Extended are control tokens, not separate crawlers.
 export const AI_BOTS = [
-    { userAgent: 'GPTBot', allow: '/' },
-    { userAgent: 'OAI-SearchBot', allow: '/' },
-    { userAgent: 'ChatGPT-User', allow: '/' },
-    { userAgent: 'ClaudeBot', allow: '/' },
-    { userAgent: 'Claude-User', allow: '/' },
-    { userAgent: 'Claude-SearchBot', allow: '/' },
-    { userAgent: 'anthropic-ai', allow: '/' },
-    { userAgent: 'PerplexityBot', allow: '/' },
-    { userAgent: 'Perplexity-User', allow: '/' },
-    { userAgent: 'cohere-ai', allow: '/' },
-    { userAgent: 'MistralAI-User', allow: '/' },
-    { userAgent: 'Googlebot', allow: '/' },
-    { userAgent: 'Google-Extended', allow: '/' },
-    { userAgent: 'Bingbot', allow: '/' },
-    { userAgent: 'Meta-ExternalAgent', allow: '/' },
-    { userAgent: 'Meta-ExternalFetcher', allow: '/' },
-    { userAgent: 'Applebot', allow: '/' },
-    { userAgent: 'Applebot-Extended', allow: '/' },
-    { userAgent: 'Bytespider', allow: '/' },
-    { userAgent: 'Amazonbot', allow: '/' },
-    { userAgent: 'CCBot', allow: '/' },
-    { userAgent: 'diffbot', allow: '/' },
-    { userAgent: 'webzio-extended', allow: '/' },
+    { userAgent: 'GPTBot', allow: '/', purpose: 'training' },
+    { userAgent: 'OAI-SearchBot', allow: '/', purpose: 'search' },
+    { userAgent: 'ChatGPT-User', allow: '/', purpose: 'user' },
+    { userAgent: 'ClaudeBot', allow: '/', purpose: 'training' },
+    { userAgent: 'Claude-User', allow: '/', purpose: 'user' },
+    { userAgent: 'Claude-SearchBot', allow: '/', purpose: 'search' },
+    { userAgent: 'anthropic-ai', allow: '/', purpose: 'training' },
+    { userAgent: 'PerplexityBot', allow: '/', purpose: 'search' },
+    { userAgent: 'Perplexity-User', allow: '/', purpose: 'user' },
+    { userAgent: 'cohere-ai', allow: '/', purpose: 'other' },
+    { userAgent: 'MistralAI-User', allow: '/', purpose: 'user' },
+    { userAgent: 'Googlebot', allow: '/', purpose: 'search' },
+    { userAgent: 'Google-Extended', allow: '/', purpose: 'training' },
+    { userAgent: 'Bingbot', allow: '/', purpose: 'search' },
+    { userAgent: 'Meta-ExternalAgent', allow: '/', purpose: 'training' },
+    { userAgent: 'Meta-ExternalFetcher', allow: '/', purpose: 'user' },
+    { userAgent: 'Applebot', allow: '/', purpose: 'search' },
+    { userAgent: 'Applebot-Extended', allow: '/', purpose: 'training' },
+    { userAgent: 'Bytespider', allow: '/', purpose: 'training' },
+    { userAgent: 'Amazonbot', allow: '/', purpose: 'other' },
+    { userAgent: 'CCBot', allow: '/', purpose: 'training' },
+    { userAgent: 'diffbot', allow: '/', purpose: 'other' },
+    { userAgent: 'webzio-extended', allow: '/', purpose: 'training' },
 ];
+
+export const AI_TRAINING_MODES = ['allow', 'block'];

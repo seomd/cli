@@ -47,7 +47,8 @@ const { analyzeCommand, matchRoute } = await import('../src/commands/analyze.js'
 const { statusCommand } = await import('../src/commands/status.js');
 const { validateCommand } = await import('../src/commands/validate.js');
 const { generateCommand } = await import('../src/commands/generate.js');
-const { checkCommand } = await import('../src/commands/check.js');
+const { checkCommand, auditRobotsTxt } = await import('../src/commands/check.js');
+const { buildRobotsTxt } = await import('../src/commands/generate.js');
 const { doctorCommand } = await import('../src/commands/doctor.js');
 const { generateSeoMd } = await import('../src/generators/seomd.js');
 const { parseSeoMd } = await import('../src/utils/parser.js');
@@ -405,6 +406,17 @@ describe('validate', () => {
         logSpy.mockRestore();
     });
 
+    test('rejects an invalid crawl.ai_training value', async () => {
+        await writeV2SeoMd(cwd);
+        const raw = await fs.readFile(path.join(cwd, 'SEO.md'), 'utf8');
+        await fs.writeFile(path.join(cwd, 'SEO.md'), raw.replace('ai_training: allow', 'ai_training: sometimes'), 'utf8');
+        const logSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
+        await validateCommand({ json: true });
+        expect(process.exitCode).toBe(1);
+        expect(logSpy.mock.calls.join('\n')).toContain('crawl.ai_training');
+        logSpy.mockRestore();
+    });
+
     test('--strict fails when warnings exist', async () => {
         await writeV2SeoMd(cwd); // keywords.secondary is empty -> warning
         const logSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
@@ -547,6 +559,38 @@ describe('generate & check & doctor (local zero-API-key loop)', () => {
 
         fetchSpy.mockRestore();
         logSpy.mockRestore();
+    });
+
+    test('generate robots repeats site disallows in every AI bot group', () => {
+        const robots = buildRobotsTxt({ site: { domain: 'example.com' }, crawl: { disallow: ['/admin'] } });
+        const gptGroup = robots.split('\n\n').find((g) => g.includes('User-agent: GPTBot'));
+        expect(gptGroup).toContain('Allow: /');
+        expect(gptGroup).toContain('Disallow: /admin');
+    });
+
+    test('crawl.ai_training: block disallows training crawlers but keeps search crawlers', () => {
+        const robots = buildRobotsTxt({ site: { domain: 'example.com' }, crawl: { ai_training: 'block', disallow: [] } });
+        const group = (ua) => robots.split('\n\n').find((g) => g.split('\n').includes(`User-agent: ${ua}`));
+        expect(group('GPTBot')).toContain('Disallow: /');
+        expect(group('ClaudeBot')).toContain('Disallow: /');
+        expect(group('Google-Extended')).toContain('Disallow: /');
+        expect(group('OAI-SearchBot')).toContain('Allow: /');
+        expect(group('Claude-SearchBot')).toContain('Allow: /');
+        expect(group('PerplexityBot')).toContain('Allow: /');
+
+        // The generated file passes its own audit
+        expect(auditRobotsTxt(robots, true, 'block')).toEqual({ errors: [], warnings: [] });
+    });
+
+    test('robots audit: training blocks are errors only when SEO.md allows training', () => {
+        const robots = 'User-agent: GPTBot\nDisallow: /\n\nUser-agent: *\nAllow: /\n';
+        expect(auditRobotsTxt(robots, true, 'allow').errors).toHaveLength(1);
+        expect(auditRobotsTxt(robots, true, 'block').errors).toHaveLength(0);
+        // block, but ClaudeBot etc. are not disallowed
+        expect(auditRobotsTxt(robots, true, 'block').warnings.some((w) => w.message.includes('ClaudeBot'))).toBe(true);
+        // blocking a search crawler is always an error
+        const searchBlocked = 'User-agent: OAI-SearchBot\nDisallow: /\n';
+        expect(auditRobotsTxt(searchBlocked, true, 'block').errors[0].message).toContain('search answers');
     });
 
     test('check audits local HTML directory and flags blocked AI bots + missing H1', async () => {

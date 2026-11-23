@@ -12,6 +12,7 @@ export function buildRobotsTxt(data) {
     const canonical = (data.site?.canonical || `https://${domain}`).replace(/\/$/, '');
     const crawl = data.crawl || {};
     const allowAi = crawl.allow_ai_bots !== false;
+    const blockTraining = crawl.ai_training === 'block';
     const disallow = Array.isArray(crawl.disallow) ? crawl.disallow : ['/admin', '/api/*'];
     const sitemap = crawl.sitemap || '/sitemap.xml';
 
@@ -24,11 +25,24 @@ export function buildRobotsTxt(data) {
         '',
     ];
 
+    // A crawler with its own group ignores the `*` group, so each group repeats the site-wide
+    // disallows; otherwise naming a bot would open /admin, /api/* etc. to it.
     if (allowAi) {
-        lines.push('# AI Search & Citation Crawlers');
+        lines.push(blockTraining ? '# AI search crawlers and user-request fetchers' : '# AI search, training and user-request crawlers');
         for (const bot of AI_BOTS) {
+            if (blockTraining && bot.purpose === 'training') continue;
             lines.push(`User-agent: ${bot.userAgent}`);
             lines.push(`Allow: ${bot.allow}`);
+            lines.push(...disallow.map((d) => `Disallow: ${d}`));
+            lines.push('');
+        }
+    }
+
+    if (blockTraining) {
+        lines.push('# AI training crawlers (crawl.ai_training: block). Search visibility is unaffected.');
+        for (const bot of AI_BOTS.filter((b) => b.purpose === 'training')) {
+            lines.push(`User-agent: ${bot.userAgent}`);
+            lines.push('Disallow: /');
             lines.push('');
         }
     }

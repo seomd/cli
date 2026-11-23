@@ -207,6 +207,9 @@ function validateV2(data, body, errors, warnings) {
         if (data.crawl.llms_txt !== undefined && data.crawl.llms_txt !== null && typeof data.crawl.llms_txt !== 'string') {
             errors.push({ path: 'crawl.llms_txt', message: 'crawl.llms_txt must be a string' });
         }
+        if (data.crawl.ai_training !== undefined && data.crawl.ai_training !== null && !['allow', 'block'].includes(data.crawl.ai_training)) {
+            errors.push({ path: 'crawl.ai_training', message: "crawl.ai_training must be 'allow' or 'block'" });
+        }
     }
 
     // 7. provider (optional)

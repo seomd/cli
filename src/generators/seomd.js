@@ -188,6 +188,7 @@ export function generateSeoMd(answers, repoInfo = null) {
             robots: '/robots.txt',
             llms_txt: '/llms.txt',
             allow_ai_bots: true,
+            ai_training: 'allow',
             disallow: profile.disallow,
         },
         provider: {

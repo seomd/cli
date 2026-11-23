@@ -3,7 +3,11 @@ import fs from 'fs-extra';
 import path from 'path';
 import { parseSeoMd, getPages } from '../utils/parser.js';
 
-const KEY_AI_BOTS = ['GPTBot', 'ClaudeBot', 'PerplexityBot'];
+import { AI_BOTS } from '../utils/constants.js';
+
+// Blocking these removes a site from AI or web search answers
+const SEARCH_BOTS = ['OAI-SearchBot', 'ChatGPT-User', 'Claude-SearchBot', 'Claude-User', 'PerplexityBot', 'Googlebot', 'Bingbot'];
+const TRAINING_BOTS = AI_BOTS.filter((b) => b.purpose === 'training').map((b) => b.userAgent);
 
 /**
  * Inspects HTML content for core SEO/AEO signals.
@@ -78,12 +82,14 @@ export function auditHtmlContent(html, urlLabel, negativeKeywords = []) {
 }
 
 /**
- * Checks robots.txt content for blocked AI crawlers when allow_ai_bots is true.
+ * Checks robots.txt against SEO.md crawl settings:
+ *   - allow_ai_bots (default true): AI search crawlers must not be blocked
+ *   - ai_training (allow | block): training crawlers may be blocked, or must be when 'block'
  */
-export function auditRobotsTxt(robotsContent, allowAiBots = true) {
+export function auditRobotsTxt(robotsContent, allowAiBots = true, aiTraining = 'allow') {
     const errors = [];
     const warnings = [];
-    if (!allowAiBots) return { errors, warnings };
+    const blockedBots = new Set();
 
     const blocks = robotsContent.split(/\r?\n\s*\r?\n/);
     for (const block of blocks) {
@@ -97,12 +103,31 @@ export function auditRobotsTxt(robotsContent, allowAiBots = true) {
         const disallowsRoot = lines.some((l) => /^disallow:\s*\/\s*$/i.test(l));
 
         if (!disallowsRoot) continue;
-        for (const bot of KEY_AI_BOTS) {
-            if (agents.includes(bot.toLowerCase())) {
-                errors.push({
+        for (const agent of agents) blockedBots.add(agent);
+    }
+
+    if (allowAiBots) {
+        const mustAllow = aiTraining === 'block' ? SEARCH_BOTS : [...SEARCH_BOTS, ...TRAINING_BOTS];
+        for (const bot of mustAllow) {
+            if (!blockedBots.has(bot.toLowerCase())) continue;
+            const isTraining = TRAINING_BOTS.includes(bot);
+            errors.push({
+                target: 'robots.txt',
+                rule: 'ai-bots',
+                message: isTraining
+                    ? `${bot} is blocked (Disallow: /) but SEO.md allows AI training. Set crawl.ai_training: block if that's intended.`
+                    : `${bot} is blocked (Disallow: /), which keeps the site out of that engine's search answers (crawl.allow_ai_bots: true)`,
+            });
+        }
+    }
+
+    if (aiTraining === 'block') {
+        for (const bot of TRAINING_BOTS) {
+            if (!blockedBots.has(bot.toLowerCase())) {
+                warnings.push({
                     target: 'robots.txt',
-                    rule: 'ai-bots',
-                    message: `${bot} is blocked (Disallow: /) in robots.txt, conflicting with crawl.allow_ai_bots: true`,
+                    rule: 'ai-training',
+                    message: `crawl.ai_training is block, but ${bot} is not disallowed`,
                 });
             }
         }
@@ -141,6 +166,7 @@ export async function checkCommand(target, options = {}) {
         const { data } = await parseSeoMd(cwd);
         const negativeKeywords = Array.isArray(data.keywords?.negative) ? data.keywords.negative : [];
         const allowAiBots = data.crawl?.allow_ai_bots !== false;
+        const aiTraining = data.crawl?.ai_training === 'block' ? 'block' : 'allow';
 
         const errors = [];
         const warnings = [];
@@ -160,7 +186,7 @@ export async function checkCommand(target, options = {}) {
                 const res = await fetch(`${baseUrl}/robots.txt`);
                 if (res.ok) {
                     const text = await res.text();
-                    const r = auditRobotsTxt(text, allowAiBots);
+                    const r = auditRobotsTxt(text, allowAiBots, aiTraining);
                     errors.push(...r.errors);
                     warnings.push(...r.warnings);
                 } else {
@@ -222,7 +248,7 @@ export async function checkCommand(target, options = {}) {
                 if (!foundRobots && (await fs.pathExists(robotsPath))) {
                     foundRobots = true;
                     const robotsContent = await fs.readFile(robotsPath, 'utf8');
-                    const r = auditRobotsTxt(robotsContent, allowAiBots);
+                    const r = auditRobotsTxt(robotsContent, allowAiBots, aiTraining);
                     errors.push(...r.errors);
                     warnings.push(...r.warnings);
                 }
