@@ -176,6 +176,16 @@ describe('init (v2)', () => {
         expect(await fs.pathExists(path.join(cwd, 'AGENTS.md'))).toBe(false);
     });
 
+    test('skips a CLAUDE.md that only imports AGENTS.md (no duplicate block)', async () => {
+        await fs.writeFile(path.join(cwd, 'AGENTS.md'), '# AGENTS.md\n\nRules.\n', 'utf8');
+        await fs.writeFile(path.join(cwd, 'CLAUDE.md'), '@AGENTS.md\n', 'utf8');
+
+        await initCommand({ yes: true, type: 'saas' });
+
+        expect(await fs.readFile(path.join(cwd, 'AGENTS.md'), 'utf8')).toContain(MARKER_START);
+        expect(await fs.readFile(path.join(cwd, 'CLAUDE.md'), 'utf8')).toBe('@AGENTS.md\n');
+    });
+
     test('respects --no-wire-agents', async () => {
         await initCommand({ yes: true, type: 'saas', wireAgents: false });
         expect(await fs.pathExists(path.join(cwd, 'AGENTS.md'))).toBe(false);

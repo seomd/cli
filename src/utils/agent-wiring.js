@@ -48,8 +48,19 @@ export async function wireAgentFiles(cwd) {
         'm'
     );
 
+    // Claude Code projects often keep a CLAUDE.md that just imports AGENTS.md (`@AGENTS.md`).
+    // Wiring both would give the agent the same block twice, so wire AGENTS.md only.
+    const hasAgentsMd = existing.some((f) => f.fileName === 'AGENTS.md');
+    const IMPORTS_AGENTS_MD = /^\s*@(\.\/)?AGENTS\.md\s*$/m;
+
     for (const { fileName, filePath } of existing) {
         const current = await fs.readFile(filePath, 'utf8');
+        if (fileName === 'CLAUDE.md' && hasAgentsMd && IMPORTS_AGENTS_MD.test(current)) {
+            // Remove a block an earlier version added, then leave the import alone
+            const stripped = current.replace(blockRegex, '').replace(/\n{3,}/g, '\n\n').replace(/\s+$/, '\n');
+            if (stripped !== current) await fs.writeFile(filePath, stripped, 'utf8');
+            continue;
+        }
         let next;
 
         if (blockRegex.test(current)) {
