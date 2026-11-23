@@ -1,7 +1,7 @@
 {
     "name": "seomd-cli",
     "version": "2.0.1",
-    "description": "The official CLI for the SEO.md open standard — AEO infrastructure for technical founders and coding agents",
+    "description": "The official CLI for the SEO.md open standard \u2014 AEO infrastructure for technical founders and coding agents",
     "homepage": "https://seomd.dev",
     "repository": {
         "type": "git",
@@ -23,7 +23,8 @@
         "test": "node --experimental-vm-modules node_modules/.bin/jest",
         "lint": "eslint bin/**/*.js src/**/*.js scripts/**/*.js tests/**/*.js",
         "release:contributors": "node scripts/release-contributors.js",
-        "release:notes": "node scripts/release-notes.js"
+        "release:notes": "node scripts/release-notes.js",
+        "postversion": "git push --follow-tags"
     },
     "dependencies": {
         "axios": "^1.6.0",
