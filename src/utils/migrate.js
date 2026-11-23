@@ -58,6 +58,8 @@ export function seedFromExisting(data) {
     const tagline = data?.identity?.tagline || data?.site?.tagline;
     if (typeof tagline === 'string' && tagline.trim()) carry.tagline = tagline.trim();
 
+    if (data?.claims && typeof data.claims === 'object') carry.claims = data.claims;
+
     // Intent: keep curated queries + priorities per category (drop provider `_analysis` blocks)
     const queries = getIntentQueries(data);
     const intent = {};

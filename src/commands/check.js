@@ -4,6 +4,7 @@ import path from 'path';
 import { parseSeoMd, getPages } from '../utils/parser.js';
 
 import { AI_BOTS } from '../utils/constants.js';
+import { getClaims, auditClaims, auditPlaceholders } from '../utils/claims.js';
 
 // Blocking these removes a site from AI or web search answers
 const SEARCH_BOTS = ['OAI-SearchBot', 'ChatGPT-User', 'Claude-SearchBot', 'Claude-User', 'PerplexityBot', 'Googlebot', 'Bingbot'];
@@ -12,9 +13,14 @@ const TRAINING_BOTS = AI_BOTS.filter((b) => b.purpose === 'training').map((b) =>
 /**
  * Inspects HTML content for core SEO/AEO signals.
  */
-export function auditHtmlContent(html, urlLabel, negativeKeywords = []) {
+export function auditHtmlContent(html, urlLabel, negativeKeywords = [], claims = null) {
     const errors = [];
     const warnings = [];
+
+    // Facts: prices and forbidden claims from SEO.md `claims`
+    const factResult = auditClaims(html, urlLabel, claims);
+    errors.push(...factResult.errors, ...auditPlaceholders(html, urlLabel));
+    warnings.push(...factResult.warnings);
 
     const titleMatch = html.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
     const title = titleMatch ? titleMatch[1].replace(/\s+/g, ' ').trim() : '';
@@ -167,6 +173,7 @@ export async function checkCommand(target, options = {}) {
         const negativeKeywords = Array.isArray(data.keywords?.negative) ? data.keywords.negative : [];
         const allowAiBots = data.crawl?.allow_ai_bots !== false;
         const aiTraining = data.crawl?.ai_training === 'block' ? 'block' : 'allow';
+        const claims = getClaims(data);
 
         const errors = [];
         const warnings = [];
@@ -223,7 +230,7 @@ export async function checkCommand(target, options = {}) {
                         continue;
                     }
                     const html = await res.text();
-                    const r = auditHtmlContent(html, page.url, negativeKeywords);
+                    const r = auditHtmlContent(html, page.url, negativeKeywords, claims);
                     errors.push(...r.errors);
                     warnings.push(...r.warnings);
                     checkedPages += 1;
@@ -269,7 +276,7 @@ export async function checkCommand(target, options = {}) {
             const htmlFiles = await collectHtmlFiles(targetDir, targetDir);
             for (const file of htmlFiles) {
                 const html = await fs.readFile(file.fullPath, 'utf8');
-                const r = auditHtmlContent(html, file.relPath, negativeKeywords);
+                const r = auditHtmlContent(html, file.relPath, negativeKeywords, claims);
                 errors.push(...r.errors);
                 warnings.push(...r.warnings);
                 checkedPages += 1;

@@ -406,6 +406,21 @@ describe('validate', () => {
         logSpy.mockRestore();
     });
 
+    test('check fails a page with a price that is not in claims.prices', async () => {
+        await writeV2SeoMd(cwd);
+        const raw = await fs.readFile(path.join(cwd, 'SEO.md'), 'utf8');
+        await fs.writeFile(path.join(cwd, 'SEO.md'), raw.replace(/claims:\n  prices: \[\]\n  forbidden: \[\]/, 'claims:\n  prices: ["$0", "$99"]\n  forbidden: [unlimited]'), 'utf8');
+        await fs.ensureDir(path.join(cwd, 'out'));
+        await fs.writeFile(path.join(cwd, 'out', 'pricing.html'),
+            '<html><head><title>Pricing</title></head><body><h1>Pricing</h1><p>Pro is $49 per month.</p><li>Unlimited seats</li></body></html>', 'utf8');
+        const logSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
+        await checkCommand('out', { json: true });
+        const report = JSON.parse(logSpy.mock.calls.map((c) => c.join(' ')).join('\n'));
+        logSpy.mockRestore();
+        expect(process.exitCode).toBe(1);
+        expect(report.errors.map((e) => e.rule)).toEqual(expect.arrayContaining(['claims-price', 'claims-forbidden']));
+    });
+
     test('rejects an invalid crawl.ai_training value', async () => {
         await writeV2SeoMd(cwd);
         const raw = await fs.readFile(path.join(cwd, 'SEO.md'), 'utf8');

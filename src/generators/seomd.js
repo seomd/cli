@@ -183,6 +183,8 @@ export function generateSeoMd(answers, repoInfo = null) {
         schema: {
             types: SCHEMA_TYPES[siteType] || SCHEMA_TYPES.saas,
         },
+        // Facts `seomd check` verifies on rendered pages: the only prices allowed, and phrases never to assert
+        claims: carry.claims || { prices: [], forbidden: [] },
         crawl: {
             sitemap: '/sitemap.xml',
             robots: '/robots.txt',

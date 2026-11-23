@@ -60,6 +60,22 @@ npx seomd-cli check http://localhost:3000 # audit running dev server
 npx seomd-cli doctor                      # check SEO.md, agent wiring, crawl files, provider
 ```
 
+### Catch invented prices and claims
+
+List the facts your pages may state in the `claims` block of `SEO.md`:
+
+```yaml
+claims:
+  prices: ["$0", "$99", "$0.08"]   # the only prices any page may show (text and JSON-LD offers)
+  forbidden:                        # phrases no page may assert
+    - SOC 2 certified
+    - real-time
+    - unlimited
+    - free trial
+```
+
+`seomd check` then fails a page that shows any other price or asserts a forbidden phrase, quoting the sentence. A forbidden phrase is fine in a question ("Is there a free trial?") or after a negation ("There is no free trial"). A price worked out from listed ones ("$99 + 500 × $0.08 = $139") is a warning to check the math. Unfinished copy (TBD, TODO, lorem ipsum) fails on every page, with or without `claims`.
+
 ### 3) Generate Crawl & AI Discovery Artifacts
 
 ```bash
@@ -93,7 +109,7 @@ See [`PROVIDER_SPEC.md`](./PROVIDER_SPEC.md) to connect custom endpoints or thir
 |---|---|---|
 | `seomd init` | Yes | Repo-aware scaffold for `SEO.md` (v2.0.0), `.seo/`, and `AGENTS.md` / `CLAUDE.md` wiring |
 | `seomd validate` | Yes | Validate `SEO.md` (supports v2 frontmatter + legacy v1 YAML); `--strict`, `--json` |
-| `seomd check [target]` | Yes | Audit local HTML/build dir or URL against `SEO.md` (title, meta, H1, canonical, JSON-LD, AI bots, negative terms) |
+| `seomd check [target]` | Yes | Audit local HTML/build dir or URL against `SEO.md`: prices and forbidden claims (`claims`), placeholder text, title, meta, H1, canonical, JSON-LD, AI bots, negative terms |
 | `seomd generate <target>` | Yes | Generate `robots`, `llms`, or `schema` from `SEO.md` |
 | `seomd doctor` | Yes | Inspect `SEO.md`, agent wiring, crawl files, and provider readiness |
 | `seomd analyze` | Provider | Run live AI citation audit (`--page`, `--intent`, `--engines`) and merge into `.seo/` |

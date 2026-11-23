@@ -218,6 +218,32 @@ function validateV2(data, body, errors, warnings) {
         errors.push({ path: 'provider.endpoint', message: 'provider.endpoint must be a valid http(s) URL' });
     }
 
+    // 7b. claims (optional): facts `seomd check` verifies on rendered pages
+    if (data.claims !== undefined && data.claims !== null) {
+        if (typeof data.claims !== 'object' || Array.isArray(data.claims)) {
+            errors.push({ path: 'claims', message: 'claims must be an object with prices and forbidden lists' });
+        } else {
+            const { prices, forbidden } = data.claims;
+            if (prices !== undefined && prices !== null && !Array.isArray(prices)) {
+                errors.push({ path: 'claims.prices', message: 'claims.prices must be a list such as ["$0", "$99"]' });
+            } else if (Array.isArray(prices)) {
+                const bad = prices.filter((p) => !/^[$€£]?\s?(\d{1,3}(,\d{3})+|\d+)(\.\d+)?$/.test(String(p).trim()));
+                if (bad.length > 0) {
+                    errors.push({ path: 'claims.prices', message: `claims.prices has entries that aren't prices: ${bad.join(', ')}` });
+                }
+            }
+            if (forbidden !== undefined && forbidden !== null && !Array.isArray(forbidden)) {
+                errors.push({ path: 'claims.forbidden', message: 'claims.forbidden must be a list of phrases' });
+            }
+        }
+    }
+    if (!Array.isArray(data.claims?.prices) || data.claims.prices.length === 0) {
+        warnings.push({
+            path: 'claims.prices',
+            message: "claims.prices is empty, so seomd check can't flag invented prices. List every price your pages may show.",
+        });
+    }
+
     // 8. Markdown body check
     const placeholders = findPlaceholders(body);
     if (placeholders.length > 0) {
