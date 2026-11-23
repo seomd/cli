@@ -209,7 +209,9 @@ export function auditPlaceholders(html, urlLabel) {
     for (const block of visibleBlocks(html)) {
         const m = block.match(PLACEHOLDER_RE);
         // A quoted placeholder ("TBD") is prose talking about one, not unfinished copy
-        const quoted = m && QUOTES.includes(block[m.index - 1] || '') && QUOTES.includes(block[m.index + m[0].length] || '');
+        const before = m ? block[m.index - 1] : undefined;
+        const after = m ? block[m.index + m[0].length] : undefined;
+        const quoted = Boolean(before && after && QUOTES.includes(before) && QUOTES.includes(after));
         if (m && !quoted) {
             return [{
                 target: urlLabel,
