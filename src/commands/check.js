@@ -303,7 +303,8 @@ export async function checkCommand(target, options = {}) {
         }
 
         console.log('');
-        console.log(chalk.bold('SEO.md Local Check') + chalk.dim(` (${checkedPages} HTML page(s) inspected)`));
+        const heading = isUrl ? `SEO.md Live Check: ${target}` : 'SEO.md Local Check';
+        console.log(chalk.bold(heading) + chalk.dim(` (${checkedPages} HTML page(s) inspected)`));
         console.log('');
 
         if (errors.length > 0) {
