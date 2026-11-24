@@ -72,9 +72,10 @@ claims:
     - real-time
     - unlimited
     - free trial
+  skip: ["/blog/*"]                 # pages that may quote other prices, like competitor comparisons
 ```
 
-`seomd check` then fails a page that shows any other price or asserts a forbidden phrase, quoting the sentence. A forbidden phrase is fine in a question ("Is there a free trial?") or after a negation ("There is no free trial"). A price worked out from listed ones ("$99 + 500 × $0.08 = $139") is a warning to check the math. Unfinished copy (TBD, TODO, lorem ipsum) fails on every page, with or without `claims`.
+`seomd check` then fails a page that shows any other price or asserts a forbidden phrase, quoting the sentence. A forbidden phrase is fine in a question ("Is there a free trial?") or after a negation ("There is no free trial"). A price worked out from listed ones ("$99 + 500 × $0.08 = $139") is a warning to check the math. Pages matching `skip` (`*` within one path segment, `**` across segments) aren't checked against `claims`. Unfinished copy (TBD, TODO, lorem ipsum) fails on every page, with or without `claims`, including skipped ones.
 
 ### 3) Generate Crawl & AI Discovery Artifacts
 
@@ -82,6 +83,22 @@ claims:
 npx seomd-cli generate robots --out public/robots.txt
 npx seomd-cli generate llms --out public/llms.txt
 npx seomd-cli generate schema
+```
+
+`llms.txt` lists your live pages in priority order. Give a page a `title` and `description` in `SEO.md` to control its line:
+
+```yaml
+pages:
+  - id: pricing
+    url: /pricing
+    status: live
+    priority: 2
+    title: Pricing
+    description: Plans from $0 to $99 a month, billed on usage.
+```
+
+```text
+- [Pricing](https://example.com/pricing): Plans from $0 to $99 a month, billed on usage.
 ```
 
 ### 4) Connect a Live Intelligence Provider (Optional)

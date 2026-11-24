@@ -4,7 +4,7 @@ import path from 'path';
 import { parseSeoMd, getPages } from '../utils/parser.js';
 
 import { AI_BOTS } from '../utils/constants.js';
-import { getClaims, auditClaims, auditPlaceholders } from '../utils/claims.js';
+import { getClaims, claimsForPath, pagePathFromFile, auditClaims, auditPlaceholders } from '../utils/claims.js';
 
 // Blocking these removes a site from AI or web search answers
 const SEARCH_BOTS = ['OAI-SearchBot', 'ChatGPT-User', 'Claude-SearchBot', 'Claude-User', 'PerplexityBot', 'Googlebot', 'Bingbot'];
@@ -230,7 +230,7 @@ export async function checkCommand(target, options = {}) {
                         continue;
                     }
                     const html = await res.text();
-                    const r = auditHtmlContent(html, page.url, negativeKeywords, claims);
+                    const r = auditHtmlContent(html, page.url, negativeKeywords, claimsForPath(claims, page.url));
                     errors.push(...r.errors);
                     warnings.push(...r.warnings);
                     checkedPages += 1;
@@ -276,7 +276,7 @@ export async function checkCommand(target, options = {}) {
             const htmlFiles = await collectHtmlFiles(targetDir, targetDir);
             for (const file of htmlFiles) {
                 const html = await fs.readFile(file.fullPath, 'utf8');
-                const r = auditHtmlContent(html, file.relPath, negativeKeywords, claims);
+                const r = auditHtmlContent(html, file.relPath, negativeKeywords, claimsForPath(claims, pagePathFromFile(file.relPath)));
                 errors.push(...r.errors);
                 warnings.push(...r.warnings);
                 checkedPages += 1;

@@ -65,6 +65,12 @@ function validatePageEntry(page, prefix, seenIds, errors) {
         });
     }
 
+    for (const field of ['title', 'description']) {
+        if (page[field] !== undefined && page[field] !== null && typeof page[field] !== 'string') {
+            errors.push({ path: `${prefix}.${field}`, message: `Page '${page.id || prefix}' ${field} must be a string` });
+        }
+    }
+
     if (page.priority === undefined || page.priority === null) {
         errors.push({ path: `${prefix}.priority`, message: `Page '${page.id || prefix}' is missing 'priority'` });
     } else if (typeof page.priority !== 'number') {
@@ -234,6 +240,11 @@ function validateV2(data, body, errors, warnings) {
             }
             if (forbidden !== undefined && forbidden !== null && !Array.isArray(forbidden)) {
                 errors.push({ path: 'claims.forbidden', message: 'claims.forbidden must be a list of phrases' });
+            }
+            const { skip } = data.claims;
+            if (skip !== undefined && skip !== null
+                && (!Array.isArray(skip) || skip.some((s) => typeof s !== 'string' || !s.startsWith('/')))) {
+                errors.push({ path: 'claims.skip', message: 'claims.skip must be a list of URL paths such as ["/blog/*"]' });
             }
         }
     }

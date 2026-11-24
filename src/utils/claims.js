@@ -6,6 +6,7 @@
 //       - SOC 2 certified
 //       - real-time
 //       - unlimited
+//     skip: ["/blog/*"]                 # pages that may quote other prices or phrases
 //
 // A forbidden phrase is allowed in a question ("Is there a free trial?") and when a negation comes
 // shortly before it in the same sentence ("There is no free trial", "not yet SOC 2 certified"),
@@ -44,8 +45,42 @@ export function getClaims(data) {
     const forbidden = (Array.isArray(raw.forbidden) ? raw.forbidden : [])
         .map((f) => String(f || '').trim())
         .filter(Boolean);
+    const skip = (Array.isArray(raw.skip) ? raw.skip : [])
+        .map((s) => String(s || '').trim())
+        .filter((s) => s.startsWith('/'));
     if (prices.length === 0 && forbidden.length === 0) return null;
-    return { prices, forbidden };
+    return { prices, forbidden, skip };
+}
+
+function normalizePath(p) {
+    const clean = String(p || '/').split(/[?#]/)[0].replace(/\/+$/, '');
+    return clean.startsWith('/') ? clean || '/' : `/${clean}`;
+}
+
+function pathPattern(pattern) {
+    // `**` matches across segments, `*` within one: "/blog/*" matches /blog/post but not /blog/a/b
+    const source = normalizePath(pattern)
+        .split(/(\*\*|\*)/)
+        .map((part) => (part === '**' ? '.*' : part === '*' ? '[^/]*' : part.replace(/[.+?^${}()|[\]\\]/g, '\\$&')))
+        .join('');
+    return new RegExp(`^${source}$`);
+}
+
+/**
+ * The claims that apply to one page: null when the page's URL path matches `claims.skip`.
+ */
+export function claimsForPath(claims, urlPath) {
+    if (!claims) return null;
+    const target = normalizePath(urlPath);
+    return (claims.skip || []).some((p) => pathPattern(p).test(target)) ? null : claims;
+}
+
+/**
+ * URL path a static export serves a file at: "pricing/index.html" and "pricing.html" -> "/pricing".
+ */
+export function pagePathFromFile(relPath) {
+    const p = String(relPath).split('\\').join('/').replace(/(^|\/)index\.html?$/i, '').replace(/\.html?$/i, '');
+    return normalizePath(p);
 }
 
 const ENTITIES = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: ' ', ndash: '–', mdash: '—', rsquo: '’', lsquo: '‘', hellip: '…' };

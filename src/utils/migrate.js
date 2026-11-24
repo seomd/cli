@@ -80,6 +80,8 @@ export function seedFromExisting(data) {
             status: p.status || 'planned',
             priority: p.priority ?? null,
             keyword: p.primary_keyword || null,
+            ...(p.title ? { title: p.title } : {}),
+            ...(p.description ? { description: p.description } : {}),
         }));
     if (pages.length > 0) carry.pages = pages;
 

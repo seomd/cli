@@ -1,4 +1,4 @@
-import { getClaims, auditClaims, auditPlaceholders, visibleBlocks } from '../src/utils/claims.js';
+import { getClaims, claimsForPath, pagePathFromFile, auditClaims, auditPlaceholders, visibleBlocks } from '../src/utils/claims.js';
 
 const claims = getClaims({
     claims: {
@@ -82,4 +82,29 @@ describe('placeholders', () => {
 
 test('visibleBlocks keeps elements separate and drops scripts', () => {
     expect(visibleBlocks('<ul><li>No fees</li><li>Unlimited</li></ul><script>x</script>')).toEqual(['No fees', 'Unlimited']);
+});
+
+describe('claims: skip', () => {
+    const withSkip = getClaims({ claims: { prices: ['$0'], skip: ['/blog/*', '/docs/**'] } });
+
+    test('skipped paths get no claims; others keep them', () => {
+        expect(claimsForPath(withSkip, '/blog/competitor-pricing')).toBeNull();
+        expect(claimsForPath(withSkip, '/docs/api/billing')).toBeNull();
+        expect(claimsForPath(withSkip, '/blog/a/b')).toBe(withSkip); // `*` stays within one segment
+        expect(claimsForPath(withSkip, '/pricing?plan=pro')).toBe(withSkip);
+    });
+
+    test('static export files map to the URL path they are served at', () => {
+        expect(pagePathFromFile('index.html')).toBe('/');
+        expect(pagePathFromFile('pricing.html')).toBe('/pricing');
+        expect(pagePathFromFile('blog/post/index.html')).toBe('/blog/post');
+    });
+
+    test('a skipped page can quote other prices, but placeholders still fail', async () => {
+        const { auditHtmlContent } = await import('../src/commands/check.js');
+        const html = page('<p>Competitor X costs $499 per month.</p><p>Price: TBD</p>');
+        const rules = auditHtmlContent(html, '/blog/x', [], claimsForPath(withSkip, '/blog/x')).errors.map((e) => e.rule);
+        expect(rules).toContain('placeholder');
+        expect(rules).not.toContain('claims-price');
+    });
 });

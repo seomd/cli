@@ -53,6 +53,24 @@ export function buildRobotsTxt(data) {
     return lines.join('\n');
 }
 
+/**
+ * Human-readable link text for llms.txt: the page's `title`, or else its id made readable
+ * ("features-ai-audits" -> "Features: AI audits", "homepage" -> "Home").
+ */
+export function pageLabel(page) {
+    if (typeof page.title === 'string' && page.title.trim()) return page.title.trim();
+    if (page.url === '/') return 'Home';
+    const words = (word) => word
+        .split(/[-_]+/)
+        .filter(Boolean)
+        .map((w) => (/^(ai|api|seo|faq|llm|mcp|ui|ux|crm|cms|sdk)$/i.test(w) ? w.toUpperCase() : w.toLowerCase()))
+        .join(' ');
+    const segments = String(page.url || page.id || '').split('/').filter(Boolean);
+    const parts = (segments.length > 0 ? segments : [String(page.id || '')]).map(words);
+    const text = parts.join(': ');
+    return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
 export function buildLlmsTxt(data, body = '') {
     const brand = getBrand(data);
     const domain = data.site?.domain || 'example.com';
@@ -73,12 +91,15 @@ export function buildLlmsTxt(data, body = '') {
         '',
     ];
 
-    const concretePages = pages.filter((p) => p.url && !p.url.includes('['));
+    // Planned pages don't exist yet, and llms.txt must not send crawlers to a 404
+    const concretePages = pages
+        .filter((p) => p.url && !p.url.includes('[') && p.status !== 'planned')
+        .sort((a, b) => (Number(a.priority) || 0) - (Number(b.priority) || 0));
     if (concretePages.length > 0) {
         for (const page of concretePages) {
             const fullUrl = `${canonical}${page.url === '/' ? '' : page.url}`;
-            const label = page.primary_keyword ? `${page.id} — ${page.primary_keyword}` : page.id;
-            lines.push(`- [${label}](${fullUrl})`);
+            const description = typeof page.description === 'string' ? page.description.trim() : '';
+            lines.push(`- [${pageLabel(page)}](${fullUrl})${description ? `: ${description}` : ''}`);
         }
     } else {
         lines.push(`- [Homepage](${canonical})`);

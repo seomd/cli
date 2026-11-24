@@ -123,6 +123,8 @@ export function generateSeoMd(answers, repoInfo = null) {
             status: discoveredSet.has(urlKey) ? 'live' : kept.status,
             priority: kept.priority ?? pages.length + 1,
             keyword: kept.keyword,
+            ...(kept.title ? { title: kept.title } : {}),
+            ...(kept.description ? { description: kept.description } : {}),
         });
         seenUrls.add(urlKey);
         seenIds.add(id);
